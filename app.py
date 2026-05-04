@@ -28,6 +28,10 @@ def create_app(config_name: str = None) -> Flask:
     db.init_app(app)
     Migrate(app, db)
 
+    # ── FORCE HTTPS — Railway sits behind a proxy ─────────────────────────
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
     # ── LOGIN MANAGER ─────────────────────────────────────────────────────────
     login_manager = LoginManager()
     login_manager.init_app(app)

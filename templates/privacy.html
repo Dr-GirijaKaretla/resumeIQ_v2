@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy — ResumeIQ{% endblock %}
+{% block content %}
+<div class="wrap-sm" style="padding-top:40px;padding-bottom:60px">
+  <h1 class="syne" style="font-size:1.8rem;font-weight:800;letter-spacing:-.02em;margin-bottom:8px">Privacy Policy</h1>
+  <p class="text-muted mono" style="font-size:11px;margin-bottom:32px">Last updated: May 2026</p>
+
+  {% for section, content in [
+    ('What We Collect', 'We collect your name, email address, and profile picture from Google when you sign in. We collect and store a structured knowledge graph extracted from your resume — this includes your skills, experience summary, project descriptions, education, and certifications. We do not store the raw resume file after extraction. We store the analyses you run, including the job description text and the outputs generated.'),
+    ('What We Never Do', 'We never sell your personal data to any third party. We never share your resume data with recruiters, companies, or any external parties. We never use your data to train AI models. We never display advertising. We never store your full resume file permanently — only the structured knowledge graph we extract from it.'),
+    ('How We Use Your Data', 'Your knowledge graph is used exclusively to generate analyses, resume rewrites, cover letters, and recruiter emails when you request them. Usage data (number of analyses) is used to enforce subscription tier limits. We may send transactional emails (payment receipts, subscription updates) via Resend.'),
+    ('Data Storage & Security', 'Your data is stored in a PostgreSQL database hosted on Railway. Data is encrypted in transit via HTTPS. We do not implement end-to-end encryption at rest, but your data is stored in a private database accessible only to our application.'),
+    ('Your Rights', 'You can delete your account and all associated data at any time from the Profile page. Deletion is immediate and permanent — we do not retain backups of deleted accounts. You can request a copy of your data by contacting us. You can update your profile information at any time from the Profile page.'),
+    ('Payments', 'Payment processing is handled entirely by Stripe. We never see or store your card details. Stripe\'s privacy policy applies to all payment data.'),
+    ('Contact', 'For privacy questions or data requests, contact us at privacy@resumeiq.app'),
+  ] %}
+  <div style="margin-bottom:28px">
+    <h2 class="syne" style="font-size:1rem;font-weight:700;margin-bottom:8px;color:var(--accent)">{{ section }}</h2>
+    <p class="text-muted" style="font-size:13px;line-height:1.75">{{ content }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

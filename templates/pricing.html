@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Pricing — ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="wrap-sm" style="padding-top:48px;text-align:center">
+
+  <div class="mono text-accent" style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;margin-bottom:12px">Simple Pricing</div>
+  <h1 class="syne" style="font-size:2.2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:12px">
+    Start free. Upgrade when ready.
+  </h1>
+  <p class="text-muted" style="font-size:14px;line-height:1.7;max-width:440px;margin:0 auto 40px">
+    Every plan includes honest resume matching. No manipulation. No keyword stuffing. No false hope.
+  </p>
+
+  <div id="alert-box"></div>
+
+  <div class="grid-3" style="text-align:left;margin-bottom:40px;align-items:start">
+
+    <!-- FREE -->
+    <div class="card" style="padding:28px 22px">
+      <div class="mono text-muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Free</div>
+      <div class="syne" style="font-size:2.4rem;font-weight:800;line-height:1;margin-bottom:4px">$0</div>
+      <div class="text-muted" style="font-size:12px;margin-bottom:20px">forever · no card needed</div>
+      <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
+      {% for f in [
+        '3 analyses per month',
+        'Match score + letter grade',
+        'Quality gate protection',
+        'Keyword gap preview',
+        'Knowledge graph saved forever',
+        'One-time resume upload',
+      ] %}
+      <div style="display:flex;gap:8px;font-size:13px;color:var(--muted);padding:5px 0">
+        <span style="color:var(--green);flex-shrink:0">✓</span>{{ f }}
+      </div>
+      {% endfor %}
+      {% for f in ['Resume rewrite + PDF','Cover letter','Recruiter email','Full keyword intelligence'] %}
+      <div style="display:flex;gap:8px;font-size:13px;color:rgba(255,255,255,.2);padding:5px 0">
+        <span style="flex-shrink:0">✕</span>{{ f }}
+      </div>
+      {% endfor %}
+      <a href="/auth/login" class="btn btn-ghost" style="width:100%;margin-top:20px;text-align:center;padding:11px;display:block">
+        Get started free
+      </a>
+    </div>
+
+    <!-- JOB HUNTER -->
+    <div class="card" style="padding:28px 22px;border-color:var(--accent);position:relative">
+      <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-family:'DM Mono',monospace;font-size:10px;padding:3px 16px;border-radius:99px;white-space:nowrap;letter-spacing:.06em">
+        MOST POPULAR
+      </div>
+      <div class="mono text-accent" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Job Hunter</div>
+      <div class="syne" style="font-size:2.4rem;font-weight:800;line-height:1;margin-bottom:4px">$9</div>
+      <div class="text-muted" style="font-size:12px;margin-bottom:20px">per month · cancel anytime</div>
+      <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
+      {% for f in [
+        'Unlimited analyses',
+        'Full match score breakdown',
+        'Resume rewrite — PDF download',
+        'STAR cover letter',
+        'Recruiter email / LinkedIn note',
+        'Full keyword intelligence + placement',
+        'Project improvement suggestions',
+        'Last 10 applications saved',
+      ] %}
+      <div style="display:flex;gap:8px;font-size:13px;color:var(--muted);padding:5px 0">
+        <span style="color:var(--green);flex-shrink:0">✓</span>{{ f }}
+      </div>
+      {% endfor %}
+      <button onclick="checkout('job_hunter')" id="btn-job-hunter"
+        class="btn btn-primary" style="width:100%;margin-top:20px;padding:13px;font-size:14px">
+        Start Job Hunter →
+      </button>
+      <p class="text-muted mono" style="font-size:10px;margin-top:8px;text-align:center">
+        Secure checkout via Stripe
+      </p>
+    </div>
+
+    <!-- CAREER PRO -->
+    <div class="card" style="padding:28px 22px">
+      <div class="mono text-green" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Career Pro</div>
+      <div class="syne" style="font-size:2.4rem;font-weight:800;line-height:1;margin-bottom:4px">$19</div>
+      <div class="text-muted" style="font-size:12px;margin-bottom:20px">per month · cancel anytime</div>
+      <div style="height:1px;background:var(--border);margin-bottom:16px"></div>
+      <div class="mono text-muted" style="font-size:10px;margin-bottom:10px">Everything in Job Hunter, plus:</div>
+      {% for f in [
+        'PDF + DOCX download',
+        'Cover letter tone selector',
+        'Interview prep pack',
+        'LinkedIn profile optimizer',
+        'Unlimited application history',
+        'Multi-resume versions',
+        'Priority support',
+      ] %}
+      <div style="display:flex;gap:8px;font-size:13px;color:var(--muted);padding:5px 0">
+        <span style="color:var(--green);flex-shrink:0">✓</span>{{ f }}
+      </div>
+      {% endfor %}
+      <button onclick="checkout('career_pro')" id="btn-career-pro"
+        class="btn btn-green" style="width:100%;margin-top:20px;padding:13px;font-size:14px">
+        Start Career Pro →
+      </button>
+      <p class="text-muted mono" style="font-size:10px;margin-top:8px;text-align:center">
+        Secure checkout via Stripe
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Trust signals -->
+  <div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;margin-bottom:32px">
+    {% for item in [
+      ('🔒','Secure payments via Stripe'),
+      ('↩','Cancel anytime — no lock-in'),
+      ('🎯','65% match gate on every plan'),
+      ('🛡','Never manipulates your resume'),
+    ] %}
+    <div class="mono text-muted" style="font-size:11px;display:flex;gap:6px;align-items:center">
+      <span>{{ item[0] }}</span>{{ item[1] }}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- FAQ -->
+  <div style="max-width:560px;margin:0 auto;text-align:left">
+    <div class="syne bold" style="font-size:14px;margin-bottom:16px;text-align:center">Common Questions</div>
+    {% for q,a in [
+      ('What is the 65% match gate?', 'Before running a full analysis, we check that you have a genuine chance at the role. If your real skills match below 65%, we block the analysis and show you exactly what\'s missing — protecting you from wasted applications and false hope.'),
+      ('Will ResumeIQ add skills I don\'t have?', 'Never. We only help you present your real experience more accurately. Every skill listed in your rewritten resume is traceable to your actual knowledge graph. You can defend every word in an interview.'),
+      ('Can I cancel my subscription?', 'Yes, anytime. Go to Profile → Manage Subscription. You\'ll keep your tier until the end of the billing period, then revert to free.'),
+      ('Is my resume data safe?', 'Yes. We store only the structured knowledge graph — not the raw resume file. You can delete your account and all data at any time from the Profile page.'),
+    ] %}
+    <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+      <div class="syne bold" style="font-size:13px;margin-bottom:5px">{{ q }}</div>
+      <p class="text-muted" style="font-size:12px;line-height:1.65">{{ a }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<script>
+async function checkout(plan) {
+  {% if not current_user.is_authenticated %}
+    window.location.href = '/auth/login';
+    return;
+  {% endif %}
+
+  const btn = document.getElementById('btn-' + plan.replace('_','-'));
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+
+  try {
+    const res  = await fetch(`/billing/checkout/${plan}`, { method: 'POST' });
+    const json = await res.json();
+
+    if (!res.ok || !json.success) {
+      showAlert(json.error || 'Could not start checkout. Please try again.', 'error');
+      btn.disabled = false;
+      btn.textContent = originalText;
+      return;
+    }
+
+    // Redirect to Stripe Checkout
+    window.location.href = json.checkout_url;
+
+  } catch(e) {
+    showAlert('Network error: ' + e.message, 'error');
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
+function showAlert(msg, type) {
+  const b = document.getElementById('alert-box');
+  b.innerHTML = `<div class="alert alert-${type}" style="margin-bottom:20px">⚠ ${msg}</div>`;
+}
+
+// Highlight current plan
+{% if current_user.is_authenticated %}
+const tier = '{{ current_user.tier }}';
+if (tier === 'job_hunter') {
+  const btn = document.getElementById('btn-job-hunter');
+  if (btn) { btn.textContent = 'Current Plan ✓'; btn.disabled = true; btn.style.opacity = '.6'; }
+}
+if (tier === 'career_pro') {
+  const btn = document.getElementById('btn-career-pro');
+  if (btn) { btn.textContent = 'Current Plan ✓'; btn.disabled = true; btn.style.opacity = '.6'; }
+}
+{% endif %}
+</script>
+{% endblock %}

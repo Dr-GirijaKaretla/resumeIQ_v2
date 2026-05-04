@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}Interview Prep — ResumeIQ{% endblock %}
+
+{% block extra_head %}
+<style>
+  .acc-hdr{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;transition:border-color .2s;user-select:none;margin-bottom:4px}
+  .acc-hdr:hover{border-color:var(--accent)}
+  .acc-hdr.open{border-radius:10px 10px 0 0;border-color:var(--accent);border-bottom-color:transparent}
+  .acc-body{background:var(--surface2);border:1px solid var(--accent);border-top:none;border-radius:0 0 10px 10px;padding:16px;display:none;margin-bottom:4px}
+  .acc-body.open{display:block;animation:fadeUp .25s ease}
+  .diff-badge{font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;flex-shrink:0;margin-top:2px}
+  .diff-Easy  {background:rgba(0,217,160,.12);color:var(--green);border:1px solid rgba(0,217,160,.2)}
+  .diff-Medium{background:rgba(255,209,102,.12);color:var(--yellow);border:1px solid rgba(255,209,102,.2)}
+  .diff-Hard  {background:rgba(255,107,107,.12);color:var(--red);border:1px solid rgba(255,107,107,.2)}
+  .star-block{background:var(--surface);border-radius:8px;padding:10px 12px;margin:8px 0}
+  .star-label{font-family:'DM Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+  .copy-wrap{position:relative}
+  .copy-fab{position:absolute;top:6px;right:6px;font-family:'DM Mono',monospace;font-size:10px;background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:2px 7px;cursor:pointer;transition:all .2s}
+  .copy-fab.copied{background:rgba(0,217,160,.15);color:var(--green);border-color:rgba(0,217,160,.3)}
+  .section-hdr{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+  .tip-chip{font-size:12px;color:var(--muted);padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:8px;line-height:1.55}
+  .tip-chip:last-child{border-bottom:none}
+  .followup{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--surface);border-radius:5px;padding:4px 8px;display:inline-block;margin:2px}
+  .watchout{background:rgba(255,107,107,.07);border:1px solid rgba(255,107,107,.18);border-radius:7px;padding:8px 10px;font-size:12px;color:#f08070;margin-top:8px;line-height:1.55}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap-sm" style="padding-top:32px">
+
+  <!-- Header -->
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="syne" style="font-size:1.6rem;font-weight:800;letter-spacing:-.02em">🎤 Interview Prep</h1>
+      <p class="text-muted mono" style="font-size:11px;margin-top:3px">Personalized questions and model answers from your real experience</p>
+    </div>
+    <a href="/app" class="btn btn-ghost" style="padding:10px 16px;font-size:12px">← Dashboard</a>
+  </div>
+
+  {% if user.tier != 'career_pro' %}
+  <!-- Upgrade gate -->
+  <div class="card" style="text-align:center;padding:48px 24px">
+    <div style="font-size:36px;margin-bottom:14px">🎤</div>
+    <h2 class="syne" style="font-size:1.3rem;font-weight:800;margin-bottom:10px">Interview Prep Pack</h2>
+    <p class="text-muted" style="font-size:13px;line-height:1.7;max-width:420px;margin:0 auto 20px">
+      Get personalized technical and behavioural questions with STAR model answers built from your real experience. Available on Career Pro.
+    </p>
+    <a href="/pricing" class="btn btn-primary" style="font-size:14px;padding:12px 28px;display:inline-block">Upgrade to Career Pro →</a>
+  </div>
+  {% else %}
+
+  <div id="alert-box"></div>
+
+  <!-- Job Input -->
+  <div class="card" style="margin-bottom:14px" id="input-section">
+    <div class="label">Generate Interview Prep For</div>
+    <div class="grid-2" style="margin-bottom:10px">
+      <div class="field" style="margin-bottom:0">
+        <label class="label" style="font-size:10px">Company</label>
+        <input class="input" id="company" placeholder="Google" style="font-size:13px">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="label" style="font-size:10px">Role Title</label>
+        <input class="input" id="role" placeholder="Senior Data Scientist" style="font-size:13px">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label class="label" style="font-size:10px">Job Description</label>
+      <textarea class="input" id="jd-text" rows="5" placeholder="Paste the job description here..."></textarea>
+    </div>
+    <button class="btn btn-primary" id="gen-btn" onclick="generatePrep()" style="width:100%;font-size:14px;padding:13px">
+      ✦ Generate My Interview Prep
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" style="display:none;text-align:center;padding:48px 0">
+    <div class="spinner" style="margin:0 auto 14px"></div>
+    <div class="syne bold" style="font-size:14px;margin-bottom:6px">Building your interview pack...</div>
+    <p class="mono text-muted" id="load-msg" style="font-size:11px;animation:pulse 1.8s ease infinite">
+      Analysing JD requirements...
+    </p>
+  </div>
+
+  <!-- Results -->
+  <div id="results" style="display:none;animation:fadeUp .5s ease">
+
+    <!-- Tell Me About Yourself -->
+    <div class="section-hdr">🧑 Tell Me About Yourself</div>
+    <div class="card green-top" style="margin-bottom:14px">
+      <div class="label" style="margin-bottom:8px">Your 90-Second Script</div>
+      <div class="copy-wrap">
+        <div id="tmay-script" style="font-size:13px;color:var(--text);line-height:1.75;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 40px 12px 12px;white-space:pre-wrap"></div>
+        <button class="copy-fab" onclick="copyEl('tmay-script',this)">Copy</button>
+      </div>
+      <div id="tmay-tips" style="margin-top:10px"></div>
+    </div>
+
+    <!-- Technical Questions -->
+    <div class="section-hdr">⚙️ Technical Questions <span class="mono text-muted" style="font-size:10px;font-weight:400" id="tech-count"></span></div>
+    <div id="technical-qs"></div>
+
+    <!-- Behavioural Questions -->
+    <div class="section-hdr">🤝 Behavioural Questions <span class="mono text-muted" style="font-size:10px;font-weight:400" id="beh-count"></span></div>
+    <div id="behavioural-qs"></div>
+
+    <!-- Questions to Ask -->
+    <div class="section-hdr">💬 Questions to Ask the Interviewer</div>
+    <div id="questions-to-ask" class="card" style="margin-bottom:14px"></div>
+
+    <!-- Gap Handling -->
+    <div class="section-hdr" id="gap-hdr" style="display:none">⚡ How to Handle Your Gaps Honestly</div>
+    <div id="gap-handling"></div>
+
+    <!-- Salary Negotiation -->
+    <div class="section-hdr">💰 Salary Negotiation</div>
+    <div class="card" style="margin-bottom:14px" id="salary-section"></div>
+
+    <!-- Company Research -->
+    <div class="section-hdr">🔍 What to Research About This Company</div>
+    <div class="card" style="margin-bottom:14px" id="company-research"></div>
+
+    <!-- Red Flags -->
+    <div class="section-hdr">🚨 Red Flags to Avoid</div>
+    <div class="card" style="margin-bottom:20px" id="red-flags"></div>
+
+    <!-- Reset -->
+    <div class="text-center">
+      <button class="btn btn-ghost" onclick="resetPrep()">↩ Generate for Another Job</button>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+{% if user.tier == 'career_pro' %}
+<script>
+const loadMsgs = ['Analysing JD requirements...','Mapping to your experience...','Writing technical questions...','Building STAR answers...','Finalising your prep pack...'];
+let _loadTimer;
+function startLoad() {
+  let i = 0;
+  const el = document.getElementById('load-msg');
+  el.textContent = loadMsgs[0];
+  _loadTimer = setInterval(()=>{ i=(i+1)%loadMsgs.length; el.textContent=loadMsgs[i]; }, 2000);
+}
+function stopLoad() { clearInterval(_loadTimer); }
+
+async function generatePrep() {
+  const jd      = document.getElementById('jd-text').value.trim();
+  const company = document.getElementById('company').value.trim() || 'the company';
+  const role    = document.getElementById('role').value.trim()    || 'this role';
+
+  if (!jd) { showAlert('Please paste the job description.','error'); return; }
+
+  document.getElementById('input-section').style.display = 'none';
+  document.getElementById('results').style.display       = 'none';
+  document.getElementById('loading').style.display       = 'block';
+  startLoad();
+
+  try {
+    const res  = await fetch('/api/interview-prep', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ jd_text: jd, company, role })
+    });
+    const json = await res.json();
+    stopLoad();
+    document.getElementById('loading').style.display = 'none';
+
+    if (!res.ok || !json.success) {
+      document.getElementById('input-section').style.display = 'block';
+      showAlert(json.error || 'Generation failed.', 'error');
+      return;
+    }
+    renderPrep(json.data.prep, company, role);
+    document.getElementById('results').style.display = 'block';
+    window.scrollTo({top:0, behavior:'smooth'});
+  } catch(e) {
+    stopLoad();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('input-section').style.display = 'block';
+    showAlert('Network error: '+e.message,'error');
+  }
+}
+
+function esc(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function renderPrep(p, company, role) {
+  // Tell me about yourself
+  const tmay = p.tell_me_about_yourself || {};
+  document.getElementById('tmay-script').textContent = tmay.script || '';
+  document.getElementById('tmay-tips').innerHTML = (tmay.tips||[]).map(t=>`
+    <div class="tip-chip"><span style="color:var(--accent);flex-shrink:0">→</span>${esc(t)}</div>`).join('');
+
+  // Technical questions
+  const techQs = p.technical_questions || [];
+  document.getElementById('tech-count').textContent = `${techQs.length} questions`;
+  document.getElementById('technical-qs').innerHTML = techQs.map((q,i)=>
+    buildQuestionCard(q, 'tech', i, true)
+  ).join('');
+
+  // Behavioural questions
+  const behQs = p.behavioural_questions || [];
+  document.getElementById('beh-count').textContent = `${behQs.length} questions`;
+  document.getElementById('behavioural-qs').innerHTML = behQs.map((q,i)=>
+    buildBehCard(q, i)
+  ).join('');
+
+  // Questions to ask
+  const qta = p.questions_to_ask || [];
+  document.getElementById('questions-to-ask').innerHTML = qta.map((q,i)=>`
+    <div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)${i===qta.length-1?';border:none':''}">
+      <div class="syne bold" style="font-size:13px;margin-bottom:3px">${esc(q.question)}</div>
+      <div class="text-muted" style="font-size:12px;line-height:1.55"><span style="color:var(--accent)">Why:</span> ${esc(q.why)}</div>
+    </div>`).join('');
+
+  // Gap handling
+  const gaps = p.gap_handling || [];
+  if (gaps.length) {
+    document.getElementById('gap-hdr').style.display = 'flex';
+    document.getElementById('gap-handling').innerHTML = gaps.map((g,i)=>`
+      <div class="card" style="margin-bottom:8px">
+        <div class="mono" style="font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Gap: ${esc(g.gap)}</div>
+        <div style="margin-bottom:8px">
+          <div class="mono text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:4px">Honest Answer</div>
+          <div style="font-size:12px;color:var(--text);line-height:1.65;background:var(--surface2);border-radius:7px;padding:8px 10px">${esc(g.honest_answer)}</div>
+        </div>
+        <div>
+          <div class="mono text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:4px">How Your Skills Bridge It</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.55;border-left:3px solid var(--accent);padding-left:8px">${esc(g.bridge)}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  // Salary negotiation
+  const sal = p.salary_negotiation || {};
+  document.getElementById('salary-section').innerHTML = `
+    ${sal.opening_line ? `<div style="margin-bottom:12px"><div class="mono text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:5px">Opening Line</div>
+      <div class="copy-wrap"><div id="sal-open" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 38px 10px 12px;font-size:13px;color:var(--text);line-height:1.65">${esc(sal.opening_line)}</div>
+      <button class="copy-fab" onclick="copyEl('sal-open',this)">Copy</button></div></div>` : ''}
+    ${sal.range_strategy ? `<div style="font-size:12px;color:var(--muted);line-height:1.65;margin-bottom:10px"><span style="color:var(--accent)">Strategy:</span> ${esc(sal.range_strategy)}</div>` : ''}
+    ${(sal.tips||[]).map(t=>`<div class="tip-chip"><span style="color:var(--green);flex-shrink:0">✓</span>${esc(t)}</div>`).join('')}`;
+
+  // Company research
+  const cr = p.company_research || [];
+  document.getElementById('company-research').innerHTML = cr.map((r,i)=>`
+    <div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)${i===cr.length-1?';border:none':''}">
+      <span class="mono text-accent" style="font-size:10px;flex-shrink:0;margin-top:2px">0${i+1}</span>
+      <div><div class="syne bold" style="font-size:12px;margin-bottom:2px">${esc(r.area)}</div>
+      <div class="text-muted" style="font-size:12px;line-height:1.55">${esc(r.why)}</div></div>
+    </div>`).join('');
+
+  // Red flags
+  const rf = p.red_flags_to_avoid || [];
+  document.getElementById('red-flags').innerHTML = rf.map(f=>`
+    <div class="tip-chip"><span style="color:var(--red);flex-shrink:0">✗</span>${esc(f)}</div>`).join('');
+}
+
+function buildQuestionCard(q, prefix, i, showDiff) {
+  const diffClass = `diff-${q.difficulty||'Medium'}`;
+  return `<div>
+    <div class="acc-hdr" onclick="toggleAcc('${prefix}-${i}')">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.45">${esc(q.question)}</div>
+        <div class="mono text-muted" style="font-size:10px;margin-top:3px">${esc(q.category||q.competency||'')}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+        ${showDiff ? `<span class="diff-badge ${diffClass}">${esc(q.difficulty||'Medium')}</span>` : ''}
+        <span class="mono text-muted" style="font-size:16px">›</span>
+      </div>
+    </div>
+    <div class="acc-body" id="${prefix}-${i}">
+      <div class="mono" style="font-size:9px;color:var(--green);text-transform:uppercase;margin-bottom:5px">Model Answer</div>
+      <div class="copy-wrap">
+        <div id="${prefix}-ans-${i}" style="font-size:12px;color:var(--text);line-height:1.75;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 38px 10px 12px;white-space:pre-wrap">${esc(q.model_answer)}</div>
+        <button class="copy-fab" onclick="copyEl('${prefix}-ans-${i}',this)">Copy</button>
+      </div>
+      ${q.follow_ups?.length ? `<div style="margin-top:10px"><div class="mono text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:5px">Likely Follow-ups</div>${q.follow_ups.map(f=>`<span class="followup">${esc(f)}</span>`).join('')}</div>` : ''}
+      ${q.watch_out ? `<div class="watchout">⚠ Watch out: ${esc(q.watch_out)}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function buildBehCard(q, i) {
+  const star = q.star_breakdown || {};
+  return `<div>
+    <div class="acc-hdr" onclick="toggleAcc('beh-${i}')">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.45">${esc(q.question)}</div>
+        <div class="mono text-muted" style="font-size:10px;margin-top:3px">${esc(q.competency||'')}</div>
+      </div>
+      <span class="mono text-muted" style="font-size:16px;flex-shrink:0">›</span>
+    </div>
+    <div class="acc-body" id="beh-${i}">
+      ${Object.entries({S:'Situation',T:'Task',A:'Action',R:'Result'}).map(([k,label])=>`
+        <div class="star-block" style="margin-bottom:6px">
+          <div class="star-label" style="color:${k==='R'?'var(--green)':k==='A'?'var(--accent)':k==='S'?'var(--yellow)':'var(--muted)'}">
+            ${k} — ${label}
+          </div>
+          <div style="font-size:12px;color:var(--text);line-height:1.65">${esc(star[label.toLowerCase()]||'')}</div>
+        </div>`).join('')}
+      <div style="margin-top:10px">
+        <div class="mono" style="font-size:9px;color:var(--green);text-transform:uppercase;margin-bottom:5px">Full Model Answer</div>
+        <div class="copy-wrap">
+          <div id="beh-ans-${i}" style="font-size:12px;color:var(--text);line-height:1.75;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 38px 10px 12px;white-space:pre-wrap">${esc(q.model_answer)}</div>
+          <button class="copy-fab" onclick="copyEl('beh-ans-${i}',this)">Copy</button>
+        </div>
+      </div>
+      ${q.follow_ups?.length ? `<div style="margin-top:8px"><div class="mono text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:5px">Likely Follow-ups</div>${q.follow_ups.map(f=>`<span class="followup">${esc(f)}</span>`).join('')}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function toggleAcc(id) {
+  const body = document.getElementById(id);
+  const hdr  = body.previousElementSibling;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open',!isOpen);
+  hdr.classList.toggle('open',!isOpen);
+}
+
+function copyEl(id, btn) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent.trim()).then(()=>{
+    btn.textContent='✓'; btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+
+function resetPrep() {
+  document.getElementById('results').style.display       = 'none';
+  document.getElementById('input-section').style.display = 'block';
+  document.getElementById('jd-text').value = '';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showAlert(msg,type) {
+  const b = document.getElementById('alert-box');
+  b.innerHTML = `<div class="alert alert-${type}" style="margin-bottom:14px">⚠ ${msg}</div>`;
+  setTimeout(()=>b.innerHTML='',6000);
+}
+
+// Pre-fill from URL params if coming from dashboard
+const params = new URLSearchParams(window.location.search);
+if (params.get('company')) document.getElementById('company').value = params.get('company');
+if (params.get('role'))    document.getElementById('role').value    = params.get('role');
+</script>
+{% endif %}
+{% endblock %}

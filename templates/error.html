@@ -1,5 +1,15 @@
 {% extends "base.html" %}
 {% block title %}{{ code }} — ResumeIQ{% endblock %}
+{% block extra_head %}
+<style>
+  body {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #1f2937 !important;
+  }
+  body .text-muted { color: #6b7280 !important; }
+</style>
+{% endblock %}
 {% block content %}
 <div class="wrap-sm" style="text-align:center;padding:80px 20px">
   <div style="font-size:48px;margin-bottom:16px">{% if code == 404 %}🔍{% else %}⚡{% endif %}</div>

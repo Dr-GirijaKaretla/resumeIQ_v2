@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ResumeIQ — Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;
+  --surface:#111827;
+  --surface2:#1a2235;
+  --border:#1f2d42;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --orange:#f97316;
+  --green:#22c55e;
+  --blue:#3b82f6;
+  --purple:#a855f7;
+  --teal:#14b8a6;
+  --red:#ef4444;
+  --yellow:#eab308;
+}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  min-height:100vh;
+  padding:32px 20px 60px;
+}
+h1{
+  font-size:28px;font-weight:800;
+  letter-spacing:-.03em;
+  background:linear-gradient(135deg,#f97316,#a855f7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  margin-bottom:6px;
+}
+.subtitle{font-size:13px;color:var(--muted);margin-bottom:40px;font-family:'JetBrains Mono',monospace}
+.wrap{max-width:1200px;margin:0 auto}
+
+/* ── LAYER SYSTEM ── */
+.arch{display:flex;flex-direction:column;gap:3px}
+.layer{
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  transition:box-shadow .2s;
+}
+.layer:hover{box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+.layer-header{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 18px;
+  font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  font-family:'JetBrains Mono',monospace;
+  cursor:pointer;user-select:none;
+}
+.layer-header .dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.layer-body{padding:14px 18px 18px;background:var(--surface)}
+.layer-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:10px;
+}
+
+/* ── CARDS ── */
+.node{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:12px 14px;
+  transition:all .2s;
+  cursor:default;
+  position:relative;
+  overflow:hidden;
+}
+.node::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--node-color,var(--border));
+  opacity:.7;
+}
+.node:hover{
+  background:#1e2d42;
+  border-color:rgba(255,255,255,.12);
+  transform:translateY(-1px);
+  box-shadow:0 4px 16px rgba(0,0,0,.3);
+}
+.node-icon{font-size:18px;margin-bottom:7px;display:block}
+.node-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px}
+.node-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.node-tag{
+  display:inline-block;margin-top:6px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:500;
+  padding:2px 7px;border-radius:4px;
+  background:rgba(255,255,255,.06);
+  color:var(--muted);
+}
+
+/* ── FLOW ARROWS ── */
+.flow{
+  display:flex;align-items:center;justify-content:center;
+  gap:8px;padding:8px 0;
+  font-size:11px;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;
+}
+.flow-line{
+  flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border),transparent);
+}
+.arrow{font-size:16px;color:var(--muted)}
+
+/* ── DATA FLOW ── */
+.data-flow{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:20px 18px;
+  margin-top:24px;
+}
+.flow-title{
+  font-size:11px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  font-family:'JetBrains Mono',monospace;
+  color:var(--muted);margin-bottom:14px;
+}
+.flow-steps{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:0;
+}
+.flow-step{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;position:relative;padding:0 8px;
+}
+.flow-step:not(:last-child)::after{
+  content:'→';
+  position:absolute;right:-8px;top:16px;
+  color:var(--orange);font-size:16px;font-weight:700;
+}
+.flow-num{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;
+  font-family:'JetBrains Mono',monospace;
+  margin-bottom:8px;flex-shrink:0;
+}
+.flow-step-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px}
+.flow-step-desc{font-size:10px;color:var(--muted);line-height:1.5}
+
+/* ── STATS ROW ── */
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:10px;margin-top:24px;
+}
+.stat{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:14px;text-align:center;
+}
+.stat-value{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.stat-label{font-size:10px;color:var(--muted);margin-top:5px;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em}
+
+/* ── LAYER COLORS ── */
+.layer-user    {border-color:#f97316;}.layer-user    .layer-header{background:rgba(249,115,22,.08)}
+.layer-frontend{border-color:#3b82f6;}.layer-frontend .layer-header{background:rgba(59,130,246,.08)}
+.layer-backend {border-color:#a855f7;}.layer-backend  .layer-header{background:rgba(168,85,247,.08)}
+.layer-ai      {border-color:#f97316;}.layer-ai      .layer-header{background:rgba(249,115,22,.08)}
+.layer-data    {border-color:#22c55e;}.layer-data     .layer-header{background:rgba(34,197,94,.08)}
+.layer-infra   {border-color:#14b8a6;}.layer-infra    .layer-header{background:rgba(20,184,166,.08)}
+.layer-external{border-color:#64748b;}.layer-external .layer-header{background:rgba(100,116,139,.08)}
+
+@media(max-width:700px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .flow-steps{grid-template-columns:1fr}
+  .flow-step:not(:last-child)::after{content:'↓';right:50%;top:auto;bottom:-14px;transform:translateX(50%)}
+  .flow-step{padding-bottom:20px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>ResumeIQ Architecture</h1>
+  <div class="subtitle">Full-stack AI career platform · 7,500+ lines · 34 files · 37 API routes</div>
+
+  <!-- ARCHITECTURE LAYERS -->
+  <div class="arch">
+
+    <!-- LAYER 1: USER -->
+    <div class="layer layer-user">
+      <div class="layer-header">
+        <div class="dot" style="background:#f97316"></div>
+        <span style="color:#f97316">Layer 1 — User Interface</span>
+        <span style="margin-left:auto;color:var(--muted);font-size:10px;text-transform:none">What the user sees and interacts with</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-grid">
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">🌐</span>
+            <div class="node-title">Landing Page</div>
+            <div class="node-desc">Marketing page with hero, features, pricing. No login required.</div>
+            <span class="node-tag">/</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">📊</span>
+            <div class="node-title">Dashboard</div>
+            <div class="node-desc">Main app — job URL input, analysis results, all 4 output tabs.</div>
+            <span class="node-tag">/app</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">📋</span>
+            <div class="node-title">Application Tracker</div>
+            <div class="node-desc">Kanban board — 8 pipeline stages from Saved to Accepted.</div>
+            <span class="node-tag">/tracker</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">🎤</span>
+            <div class="node-title">Interview Prep</div>
+            <div class="node-desc">STAR questions + model answers from real experience. Career Pro.</div>
+            <span class="node-tag">/interview</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">💼</span>
+            <div class="node-title">LinkedIn Optimizer</div>
+            <div class="node-desc">Headline, summary, SEO keywords, connection strategy.</div>
+            <span class="node-tag">/linkedin</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">📬</span>
+            <div class="node-title">Weekly Digest</div>
+            <div class="node-desc">5 pre-scored job matches preview. Auto-emailed every Monday.</div>
+            <span class="node-tag">/digest</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">📜</span>
+            <div class="node-title">History</div>
+            <div class="node-desc">All past analyses with inline detail view and PDF downloads.</div>
+            <span class="node-tag">/history</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">👤</span>
+            <div class="node-title">Profile</div>
+            <div class="node-desc">Edit knowledge graph — skills, education, certifications.</div>
+            <span class="node-tag">/profile</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow"><div class="flow-line"></div><span class="arrow">↕</span><span>HTTP Requests / JSON API</span><span class="arrow">↕</span><div class="flow-line"></div></div>
+
+    <!-- LAYER 2: FLASK BACKEND -->
+    <div class="layer layer-backend">
+      <div class="layer-header">
+        <div class="dot" style="background:#a855f7"></div>
+        <span style="color:#a855f7">Layer 2 — Flask Backend (Python)</span>
+        <span style="margin-left:auto;color:var(--muted);font-size:10px;text-transform:none">app.py · api.py · auth.py · 37 routes</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-grid">
+          <div class="node" style="--node-color:#a855f7">
+            <span class="node-icon">🏭</span>
+            <div class="node-title">app.py</div>
+            <div class="node-desc">Flask application factory. Registers all blueprints, routes, error handlers. ProxyFix for HTTPS.</div>
+            <span class="node-tag">factory pattern</span>
+          </div>
+          <div class="node" style="--node-color:#a855f7">
+            <span class="node-icon">🔌</span>
+            <div class="node-title">api.py</div>
+            <div class="node-desc">27 JSON endpoints. Profile CRUD, analysis, resume, cover letter, tracker, digest, salary, red flags.</div>
+            <span class="node-tag">27 endpoints</span>
+          </div>
+          <div class="node" style="--node-color:#a855f7">
+            <span class="node-icon">🔐</span>
+            <div class="node-title">auth.py</div>
+            <div class="node-desc">Google OAuth via Flask-Dance. Login, logout, delete account. Explicit HTTPS redirect URI.</div>
+            <span class="node-tag">OAuth 2.0</span>
+          </div>
+          <div class="node" style="--node-color:#a855f7">
+            <span class="node-icon">💳</span>
+            <div class="node-title">stripe_billing.py</div>
+            <div class="node-desc">Checkout, billing portal, webhooks. Handles subscription lifecycle — upgrade, cancel, payment failed.</div>
+            <span class="node-tag">4 webhook events</span>
+          </div>
+          <div class="node" style="--node-color:#a855f7">
+            <span class="node-icon">⚙️</span>
+            <div class="node-title">config.py</div>
+            <div class="node-desc">All environment variables, tier limits, match thresholds per career level.</div>
+            <span class="node-tag">14 env vars</span>
+          </div>
+          <div class="node" style="--node-color:#a855f7">
+            <span class="node-icon">📨</span>
+            <div class="node-title">email_service.py</div>
+            <div class="node-desc">4 transactional emails via Resend — welcome, upgrade, analysis summary, downgrade notice.</div>
+            <span class="node-tag">Resend API</span>
+          </div>
+          <div class="node" style="--node-color:#a855f7">
+            <span class="node-icon">📄</span>
+            <div class="node-title">pdf_generator.py</div>
+            <div class="node-desc">WeasyPrint HTML→PDF. Resume and cover letter. Professional Georgia serif layout.</div>
+            <span class="node-tag">WeasyPrint</span>
+          </div>
+          <div class="node" style="--node-color:#a855f7">
+            <span class="node-icon">📊</span>
+            <div class="node-title">tracker.py</div>
+            <div class="node-desc">Salary intelligence, red flag detector, company intelligence prompts.</div>
+            <span class="node-tag">3 AI tools</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow"><div class="flow-line"></div><span class="arrow">↕</span><span>Claude API Calls</span><span class="arrow">↕</span><div class="flow-line"></div></div>
+
+    <!-- LAYER 3: AI ENGINE -->
+    <div class="layer layer-ai">
+      <div class="layer-header">
+        <div class="dot" style="background:#f97316"></div>
+        <span style="color:#f97316">Layer 3 — AI Engine (knowledge_graph.py)</span>
+        <span style="margin-left:auto;color:var(--muted);font-size:10px;text-transform:none">Claude Sonnet 4 · 8 specialized prompts</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-grid">
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">🧠</span>
+            <div class="node-title">Knowledge Graph Extraction</div>
+            <div class="node-desc">Resume text → structured JSON. ~3,300 tokens. One-time at signup. 80% token saving vs raw resume.</div>
+            <span class="node-tag">~$0.010 one-time</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">⚡</span>
+            <div class="node-title">Stage 1 — Keyword Check</div>
+            <div class="node-desc">Pure string matching. Zero API cost. Blocks below 40% overlap instantly.</div>
+            <span class="node-tag">free · instant</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">🎯</span>
+            <div class="node-title">Stage 2 — AI Pre-Score</div>
+            <div class="node-desc">Compact Claude prompt. 0-100 match score. Blocks below 65% threshold.</div>
+            <span class="node-tag">~$0.0005</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">📊</span>
+            <div class="node-title">Full Analysis</div>
+            <div class="node-desc">5-dimension scoring — skills, experience, education, keywords, culture. Grade + recommendations.</div>
+            <span class="node-tag">~$0.003</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">📄</span>
+            <div class="node-title">Resume Rewrite</div>
+            <div class="node-desc">Honest rewrite — real skills, better language. Authenticity check before download.</div>
+            <span class="node-tag">~$0.004</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">✍️</span>
+            <div class="node-title">STAR Cover Letter</div>
+            <div class="node-desc">Situation→Task→Action→Result. No forbidden phrases. 4 tone options for Career Pro.</div>
+            <span class="node-tag">~$0.003</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">📧</span>
+            <div class="node-title">Recruiter Email</div>
+            <div class="node-desc">7-sentence compressed STAR. Result-first. Specific ask. Ready to copy-paste.</div>
+            <span class="node-tag">~$0.002</span>
+          </div>
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">🔍</span>
+            <div class="node-title">Keyword Intelligence</div>
+            <div class="node-desc">Missing keywords with placement strategy and copy-paste example sentences.</div>
+            <span class="node-tag">~$0.003</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow"><div class="flow-line"></div><span class="arrow">↕</span><span>SQLAlchemy ORM</span><span class="arrow">↕</span><div class="flow-line"></div></div>
+
+    <!-- LAYER 4: DATABASE -->
+    <div class="layer layer-data">
+      <div class="layer-header">
+        <div class="dot" style="background:#22c55e"></div>
+        <span style="color:#22c55e">Layer 4 — Database (PostgreSQL)</span>
+        <span style="margin-left:auto;color:var(--muted);font-size:10px;text-transform:none">models.py · 4 tables · Railway hosted</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-grid">
+          <div class="node" style="--node-color:#22c55e">
+            <span class="node-icon">👤</span>
+            <div class="node-title">users</div>
+            <div class="node-desc">google_id, email, name, tier, stripe_customer_id, analyses_this_month, last_login</div>
+            <span class="node-tag">10 columns</span>
+          </div>
+          <div class="node" style="--node-color:#22c55e">
+            <span class="node-icon">🧠</span>
+            <div class="node-title">knowledge_graphs</div>
+            <div class="node-desc">JSONB graph field — identity, education, experience, projects, skills, certifications. ~500 tokens.</div>
+            <span class="node-tag">JSONB · 1 per user</span>
+          </div>
+          <div class="node" style="--node-color:#22c55e">
+            <span class="node-icon">📊</span>
+            <div class="node-title">analyses</div>
+            <div class="node-desc">Every analysis run — score, grade, JD text, resume rewrite, cover letter, recruiter email.</div>
+            <span class="node-tag">16 columns</span>
+          </div>
+          <div class="node" style="--node-color:#22c55e">
+            <span class="node-icon">📋</span>
+            <div class="node-title">application_tracker</div>
+            <div class="node-desc">Job title, company, status, applied date, follow-up date, salary range, notes.</div>
+            <span class="node-tag">8 statuses</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow"><div class="flow-line"></div><span class="arrow">↕</span><span>External Service Calls</span><span class="arrow">↕</span><div class="flow-line"></div></div>
+
+    <!-- LAYER 5: EXTERNAL SERVICES -->
+    <div class="layer layer-external">
+      <div class="layer-header">
+        <div class="dot" style="background:#64748b"></div>
+        <span style="color:#94a3b8">Layer 5 — External Services</span>
+        <span style="margin-left:auto;color:var(--muted);font-size:10px;text-transform:none">Third-party integrations</span>
+      </div>
+      <div class="layer-body">
+        <div class="layer-grid">
+          <div class="node" style="--node-color:#f97316">
+            <span class="node-icon">🤖</span>
+            <div class="node-title">Anthropic Claude API</div>
+            <div class="node-desc">claude-sonnet-4. All AI generation. Knowledge graph, analysis, outputs, intelligence features.</div>
+            <span class="node-tag">console.anthropic.com</span>
+          </div>
+          <div class="node" style="--node-color:#4285f4">
+            <span class="node-icon">🔑</span>
+            <div class="node-title">Google OAuth</div>
+            <div class="node-desc">Sign in with Google. No passwords stored. Flask-Dance handles the OAuth 2.0 flow.</div>
+            <span class="node-tag">console.cloud.google.com</span>
+          </div>
+          <div class="node" style="--node-color:#635bff">
+            <span class="node-icon">💳</span>
+            <div class="node-title">Stripe</div>
+            <div class="node-desc">Subscription payments. Checkout, billing portal, webhooks. $9 Job Hunter / $19 Career Pro.</div>
+            <span class="node-tag">stripe.com</span>
+          </div>
+          <div class="node" style="--node-color:#22c55e">
+            <span class="node-icon">📨</span>
+            <div class="node-title">Resend</div>
+            <div class="node-desc">Transactional email. Welcome, upgrade confirmation, analysis summary, weekly digest.</div>
+            <span class="node-tag">resend.com</span>
+          </div>
+          <div class="node" style="--node-color:#64748b">
+            <span class="node-icon">🌐</span>
+            <div class="node-title">Job URL Scraper</div>
+            <div class="node-desc">BeautifulSoup4 + lxml. Fetches JD text from any job board URL. Blocks LinkedIn (requires login).</div>
+            <span class="node-tag">urllib · bs4</span>
+          </div>
+          <div class="node" style="--node-color:#14b8a6">
+            <span class="node-icon">🚂</span>
+            <div class="node-title">Railway</div>
+            <div class="node-desc">Hosting + PostgreSQL. Auto-deploy from GitHub. Health check on /health endpoint.</div>
+            <span class="node-tag">railway.app</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- USER FLOW -->
+  <div class="data-flow" style="margin-top:24px">
+    <div class="flow-title">📍 Complete User Journey — Every Analysis</div>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(249,115,22,.15);color:#f97316;border:1px solid rgba(249,115,22,.3)">1</div>
+        <div class="flow-step-title">Sign In</div>
+        <div class="flow-step-desc">Google OAuth → user created in PostgreSQL</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)">2</div>
+        <div class="flow-step-title">Upload Resume</div>
+        <div class="flow-step-desc">Once only → Claude extracts knowledge graph → saved forever</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3)">3</div>
+        <div class="flow-step-title">Paste Job URL</div>
+        <div class="flow-step-desc">BeautifulSoup fetches JD text from any job board</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.3)">4</div>
+        <div class="flow-step-title">Quality Gate</div>
+        <div class="flow-step-desc">Stage 1: keyword check (free) → Stage 2: AI pre-score (65% min)</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(249,115,22,.15);color:#f97316;border:1px solid rgba(249,115,22,.3)">5</div>
+        <div class="flow-step-title">Full Analysis</div>
+        <div class="flow-step-desc">Knowledge graph + JD → 5-dimension score + grade</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)">6</div>
+        <div class="flow-step-title">3 Outputs</div>
+        <div class="flow-step-desc">Resume PDF + STAR cover letter + recruiter email — parallel generation</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num" style="background:rgba(20,184,166,.15);color:#14b8a6;border:1px solid rgba(20,184,166,.3)">7</div>
+        <div class="flow-step-title">Intelligence</div>
+        <div class="flow-step-desc">Salary range + red flags + company intel — auto-run in background</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-value" style="color:#f97316">13</div>
+      <div class="stat-label">Python Files</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" style="color:#a855f7">14</div>
+      <div class="stat-label">HTML Templates</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" style="color:#22c55e">37</div>
+      <div class="stat-label">API Routes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" style="color:#14b8a6">8</div>
+      <div class="stat-label">AI Prompts</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" style="color:#f97316">4</div>
+      <div class="stat-label">DB Tables</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" style="color:#3b82f6">6</div>
+      <div class="stat-label">External Services</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" style="color:#eab308">3</div>
+      <div class="stat-label">Pricing Tiers</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" style="color:#22c55e">98%</div>
+      <div class="stat-label">Gross Margin</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

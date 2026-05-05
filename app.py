@@ -57,11 +57,8 @@ def create_app(config_name: str = None) -> Flask:
     # ── MAIN ROUTES ───────────────────────────────────────────────────────────
     @app.route('/')
     def index():
-        if current_user.is_authenticated:
-            if current_user.has_profile:
-                return redirect(url_for('dashboard'))
-            return redirect(url_for('setup'))
-        return render_template('landing.html')
+        # Show landing page always - no redirect loop risk
+        return render_template('landing.html', user=current_user)
 
     @app.route('/app')
     def dashboard():

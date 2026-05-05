@@ -1,10 +1,9 @@
 """
 Google OAuth Authentication
-Using Flask-Dance for OAuth flow.
-Force HTTPS for redirect URI in production.
+Sprint Fix: Resolve redirect loop after OAuth callback.
 """
 import os
-from flask import Blueprint, redirect, url_for, flash, session, current_app
+from flask import Blueprint, redirect, url_for, flash, session, current_app, request
 from flask_dance.contrib.google import make_google_blueprint, google
 from flask_login import login_user, logout_user, login_required, current_user
 from models import db, User
@@ -16,8 +15,6 @@ auth_bp = Blueprint('auth', __name__)
 def make_google_bp():
     """Create and return the Google OAuth blueprint."""
     app_url = os.environ.get('APP_URL', '').rstrip('/')
-
-    # Build explicit https redirect URI
     redirect_url = f"{app_url}/auth/google/authorized"
 
     return make_google_blueprint(
@@ -35,39 +32,45 @@ def make_google_bp():
 
 @auth_bp.route('/login')
 def login():
-    """Redirect to Google OAuth."""
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
+    """Redirect to Google OAuth — never redirect if already logged in here."""
     return redirect(url_for('google.login'))
 
 
 @auth_bp.route('/after-login')
 def after_login():
-    """Handle post-OAuth redirect."""
+    """Handle post-OAuth redirect — called after Google approves login."""
+
+    # If not authorized by Google yet, go home
     if not google.authorized:
-        flash('Login failed. Please try again.', 'error')
-        return redirect(url_for('index'))
+        current_app.logger.warning('after_login called but google.authorized=False')
+        return redirect('/')
 
     try:
         resp = google.get('/oauth2/v2/userinfo')
         if not resp.ok:
-            flash('Could not fetch your Google profile.', 'error')
-            return redirect(url_for('index'))
+            current_app.logger.error(f'userinfo failed: {resp.status_code}')
+            return redirect('/')
 
         info      = resp.json()
         google_id = info.get('id')
-        email     = info.get('email')
-        name      = info.get('name', email.split('@')[0])
+        email     = info.get('email', '')
+        name      = info.get('name', email.split('@')[0] if email else 'User')
         avatar    = info.get('picture', '')
+
+        if not google_id or not email:
+            current_app.logger.error('Missing google_id or email in userinfo')
+            return redirect('/')
 
         # Find or create user
         user = User.query.filter_by(google_id=google_id).first()
         if not user:
             user = User.query.filter_by(email=email).first()
             if user:
+                # Existing user — link Google ID
                 user.google_id  = google_id
                 user.avatar_url = avatar
             else:
+                # Brand new user
                 user = User(
                     google_id  = google_id,
                     email      = email,
@@ -78,33 +81,39 @@ def after_login():
 
         user.last_login = datetime.now(timezone.utc)
         db.session.commit()
+
+        # Log in and set session
         login_user(user, remember=True)
 
-        # New user → send welcome email + go to setup
+        current_app.logger.info(f'User logged in: {email}')
+
+        # Decide where to send them
         if not user.has_profile:
+            # New user — needs to set up profile
             try:
                 from email_service import send_welcome_email
                 send_welcome_email(user)
             except Exception as e:
                 current_app.logger.warning(f'Welcome email failed: {e}')
-            return redirect(url_for('setup'))
+            return redirect('/setup')
 
-        return redirect(url_for('dashboard'))
+        # Existing user — go to dashboard
+        return redirect('/app')
 
     except Exception as e:
-        current_app.logger.error(f'Login error: {e}')
-        flash('Something went wrong during login.', 'error')
-        return redirect(url_for('index'))
+        current_app.logger.error(f'Login error: {e}', exc_info=True)
+        return redirect('/')
 
 
 @auth_bp.route('/logout')
-@login_required
 def logout():
     """Log out current user."""
-    session.pop('google_oauth_token', None)
-    logout_user()
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('index'))
+    try:
+        session.clear()
+        logout_user()
+    except Exception:
+        pass
+    return redirect('/')
 
 
 @auth_bp.route('/delete-account', methods=['POST'])
@@ -112,8 +121,8 @@ def logout():
 def delete_account():
     """Permanently delete user account and all data."""
     user = current_user
+    session.clear()
     logout_user()
     db.session.delete(user)
     db.session.commit()
-    flash('Your account and all data have been permanently deleted.', 'info')
-    return redirect(url_for('index'))
+    return redirect('/')

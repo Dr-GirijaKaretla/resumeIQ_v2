@@ -1,1 +1,130 @@
+name: ResumeIQ CI/CD
 
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  # ── JOB 1: CODE QUALITY CHECKS ─────────────────────────────────────────────
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check Python syntax (all .py files)
+        run: |
+          echo "Checking Python syntax..."
+          python -m py_compile app.py
+          python -m py_compile api.py
+          python -m py_compile auth.py
+          python -m py_compile models.py
+          python -m py_compile knowledge_graph.py
+          python -m py_compile config.py
+          python -m py_compile stripe_billing.py
+          python -m py_compile email_service.py
+          python -m py_compile pdf_generator.py
+          python -m py_compile interview_prep.py
+          python -m py_compile linkedin_optimizer.py
+          python -m py_compile tracker.py
+          python -m py_compile job_digest.py
+          echo "✅ All Python files are valid"
+
+      - name: Check HTML templates exist
+        run: |
+          echo "Checking required templates..."
+          required_templates=(
+            "templates/base.html"
+            "templates/landing.html"
+            "templates/dashboard.html"
+            "templates/setup.html"
+            "templates/profile.html"
+            "templates/history.html"
+            "templates/tracker.html"
+            "templates/digest.html"
+            "templates/interview.html"
+            "templates/linkedin.html"
+            "templates/pricing.html"
+            "templates/billing_success.html"
+            "templates/error.html"
+            "templates/privacy.html"
+          )
+          for template in "${required_templates[@]}"; do
+            if [ -f "$template" ]; then
+              echo "  ✅ $template"
+            else
+              echo "  ❌ MISSING: $template"
+              exit 1
+            fi
+          done
+          echo "✅ All templates present"
+
+      - name: Check required files exist
+        run: |
+          echo "Checking required project files..."
+          required_files=(
+            "requirements.txt"
+            "Procfile"
+            "railway.toml"
+            ".env.example"
+          )
+          for file in "${required_files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "  ✅ $file"
+            else
+              echo "  ❌ MISSING: $file"
+              exit 1
+            fi
+          done
+          echo "✅ All required files present"
+
+      - name: Validate requirements.txt
+        run: |
+          echo "Validating requirements..."
+          python -c "
+          with open('requirements.txt') as f:
+              lines = [l.strip() for l in f if l.strip() and not l.startswith('#')]
+          print(f'  Found {len(lines)} dependencies')
+          required = ['flask', 'anthropic', 'flask-dance', 'flask-sqlalchemy', 'gunicorn', 'stripe']
+          for pkg in required:
+              found = any(pkg.lower() in line.lower() for line in lines)
+              status = '✅' if found else '❌'
+              print(f'  {status} {pkg}')
+              if not found:
+                  raise SystemExit(f'Missing required package: {pkg}')
+          print('✅ requirements.txt valid')
+          "
+
+      - name: Check Procfile is correct
+        run: |
+          echo "Checking Procfile..."
+          if grep -q "gunicorn" Procfile; then
+            echo "  ✅ Procfile uses gunicorn"
+          else
+            echo "  ❌ Procfile missing gunicorn"
+            exit 1
+          fi
+
+      - name: Summary
+        run: |
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  ✅ All quality checks passed!"
+          echo "  🚀 Railway will deploy automatically"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

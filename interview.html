@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Weekly Job Digest — ResumeIQ{% endblock %}
+
+{% block extra_head %}
+<style>
+  .job-card{background:#f3f4f2;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+  .job-card:hover{border-color:#ea580c}
+  .search-link{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-family:'Inter',sans-serif;font-size:11px;padding:5px 12px;border-radius:6px;font-weight:700;margin-top:8px;transition:opacity .2s}
+  .search-link:hover{opacity:.85}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap-sm" style="padding-top:32px">
+
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="" style="font-size:1.6rem;font-weight:800;letter-spacing:-.02em">📬 Weekly Job Digest</h1>
+      <p class="text-muted mono" style="font-size:11px;margin-top:3px">5 pre-scored roles matched to your profile every Monday</p>
+    </div>
+    <a href="/app" class="btn btn-ghost" style="padding:10px 16px;font-size:12px">← Dashboard</a>
+  </div>
+
+  {% if user.tier != 'career_pro' %}
+  <div class="card" style="text-align:center;padding:48px 24px">
+    <div style="font-size:36px;margin-bottom:14px">📬</div>
+    <h2 class="" style="font-size:1.3rem;font-weight:800;margin-bottom:10px">Weekly Job Digest</h2>
+    <p class="text-muted" style="font-size:13px;line-height:1.7;max-width:440px;margin:0 auto 16px">
+      Every Monday morning, get 5 pre-scored job matches delivered to your inbox —
+      based on your knowledge graph and target roles. Career Pro feature.
+    </p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px">
+      {% for item in ['Pre-scored match %', 'Role-specific apply tips', 'Skill spotlight each week', 'Weekly actionable goal'] %}
+      <div class="label-text text-green" style="font-size:11px">✓ {{ item }}</div>
+      {% endfor %}
+    </div>
+    <a href="/pricing" class="btn btn-primary" style="font-size:14px;padding:12px 28px;display:inline-block">Upgrade to Career Pro →</a>
+  </div>
+  {% else %}
+
+  <div id="alert-box"></div>
+
+  <!-- Info card -->
+  <div class="card green-top" style="margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
+    <span style="font-size:20px">📬</span>
+    <div>
+      <div class=" bold" style="font-size:14px;margin-bottom:4px">Auto-delivered every Monday at 8am UTC</div>
+      <p class="text-muted" style="font-size:12px;line-height:1.65;margin:0">
+        Your digest is sent automatically to <strong style="color:var(--text)">{{ user.email }}</strong> every week.
+        Preview this week's digest below, or click to regenerate a fresh one.
+      </p>
+    </div>
+  </div>
+
+  <!-- Generate Button -->
+  <div style="text-align:center;margin-bottom:20px">
+    <button class="btn btn-primary" id="gen-btn" onclick="generateDigest()" style="font-size:14px;padding:13px 28px">
+      ✦ Preview This Week's Digest
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" style="display:none;text-align:center;padding:36px 0">
+    <div class="spinner" style="margin:0 auto 14px"></div>
+    <p class="label-text text-muted" id="load-msg" style="font-size:11px;animation:pulse 1.8s ease infinite">
+      Finding your best matches this week...
+    </p>
+  </div>
+
+  <!-- Results -->
+  <div id="results" style="display:none;animation:fadeUp .4s ease">
+
+    <!-- Greeting -->
+    <div class="card" style="margin-bottom:14px;text-align:center;padding:20px">
+      <div style="font-size:24px;margin-bottom:8px">👋</div>
+      <div class=" bold" style="font-size:15px;margin-bottom:6px" id="d-greeting"></div>
+      <p class="text-muted" style="font-size:13px;line-height:1.65" id="d-motivation"></p>
+    </div>
+
+    <!-- Weekly Goal -->
+    <div id="d-goal-wrap" style="margin-bottom:14px;display:none">
+      <div class="alert alert-info" style="display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:16px;flex-shrink:0">🎯</span>
+        <div>
+          <div class=" bold" style="font-size:12px;margin-bottom:2px">This Week's Goal</div>
+          <div id="d-goal" style="font-size:13px;color:var(--text)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jobs -->
+    <div class="label-text text-muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">
+      5 Matched Roles This Week
+    </div>
+    <div id="d-jobs"></div>
+
+    <!-- Skill Spotlight -->
+    <div id="d-spotlight-wrap" style="display:none;margin-bottom:14px">
+      <div class="card yellow-top">
+        <div class="label-text" style="font-size:9px;color:var(--yellow);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">⚡ Skill Spotlight</div>
+        <div class=" bold" style="font-size:14px;margin-bottom:4px" id="d-skill-name"></div>
+        <p class="text-muted" style="font-size:12px;line-height:1.55;margin-bottom:6px" id="d-skill-trend"></p>
+        <div class="label-text" style="font-size:11px;color:var(--accent)" id="d-skill-tip"></div>
+      </div>
+    </div>
+
+    <div class="text-center mt-2">
+      <button class="btn btn-ghost" onclick="resetDigest()" style="font-size:12px">↩ Generate Another</button>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+{% if user.tier == 'career_pro' %}
+<script>
+function sc(s){return s>=80?'#16a34a':s>=65?'#ea580c':'#d97706'}
+const loadMsgs=['Finding your best matches this week...','Scoring roles against your profile...','Personalising your digest...','Almost ready...'];
+let _lt;
+function startLoad(){let i=0;const el=document.getElementById('load-msg');_lt=setInterval(()=>{i=(i+1)%loadMsgs.length;el.textContent=loadMsgs[i];},2000);}
+function stopLoad(){clearInterval(_lt);}
+function esc(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+async function generateDigest() {
+  document.getElementById('results').style.display='none';
+  document.getElementById('loading').style.display='block';
+  document.getElementById('gen-btn').disabled=true;
+  startLoad();
+
+  try{
+    const res  = await fetch('/api/digest/preview',{method:'POST'});
+    const json = await res.json();
+    stopLoad();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('gen-btn').disabled=false;
+
+    if(!res.ok||!json.success){showAlert(json.error||'Generation failed.','error');return;}
+    renderDigest(json.data.digest);
+    document.getElementById('results').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){
+    stopLoad();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('gen-btn').disabled=false;
+    showAlert('Network error: '+e.message,'error');
+  }
+}
+
+function renderDigest(d) {
+  const name = d.candidate_name || '{{ user.name.split()[0] }}';
+  document.getElementById('d-greeting').textContent   = `Good Monday, ${name}! Here are your 5 matches this week.`;
+  document.getElementById('d-motivation').textContent = d.motivation || '';
+
+  if (d.weekly_goal) {
+    document.getElementById('d-goal').textContent = d.weekly_goal;
+    document.getElementById('d-goal-wrap').style.display = 'block';
+  }
+
+  const jobs = d.jobs || [];
+  document.getElementById('d-jobs').innerHTML = jobs.map(j=>{
+    const score = j.estimated_match || 75;
+    const color = sc(score);
+    const reqs  = (j.key_requirements||[]).map(r=>`<span class="tag tag-neutral">${esc(r)}</span>`).join('');
+    const query = encodeURIComponent(j.search_query||`${j.title} ${j.company}`);
+    return `<div class="job-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+        <div>
+          <div class=" bold" style="font-size:14px">${esc(j.title)}</div>
+          <div class="text-muted" style="font-size:12px">${esc(j.company)} · ${esc(j.location||'')}</div>
+        </div>
+        <div style="text-align:center;flex-shrink:0">
+          <div class=" bold" style="font-size:24px;color:${color};line-height:1">${score}</div>
+          <div class="label-text text-muted" style="font-size:9px;text-transform:uppercase">match</div>
+        </div>
+      </div>
+      <p class="text-muted" style="font-size:12px;line-height:1.55;margin-bottom:6px">${esc(j.why_matched)}</p>
+      <div style="margin-bottom:6px">${reqs}</div>
+      <div class="label-text" style="font-size:11px;color:var(--accent);font-style:italic;margin-bottom:8px">💡 ${esc(j.apply_tip)}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <a href="https://www.linkedin.com/jobs/search/?keywords=${query}" target="_blank" class="search-link">LinkedIn →</a>
+        <a href="https://www.indeed.com/jobs?q=${query}" target="_blank" class="search-link" style="background:#f3f4f2;color:var(--text);border:1px solid var(--border)">Indeed →</a>
+      </div>
+    </div>`;
+  }).join('');
+
+  const spot = d.skill_spotlight;
+  if (spot) {
+    document.getElementById('d-skill-name').textContent  = spot.skill||'';
+    document.getElementById('d-skill-trend').textContent = spot.trend||'';
+    document.getElementById('d-skill-tip').textContent   = '📚 ' + (spot.learning_tip||'');
+    document.getElementById('d-spotlight-wrap').style.display = 'block';
+  }
+}
+
+function resetDigest() {
+  document.getElementById('results').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showAlert(msg,type){
+  const b=document.getElementById('alert-box');
+  b.innerHTML=`<div class="alert alert-${type}" style="margin-bottom:14px">⚠ ${msg}</div>`;
+  setTimeout(()=>b.innerHTML='',6000);
+}
+</script>
+{% endif %}
+{% endblock %}

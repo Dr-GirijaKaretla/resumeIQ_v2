@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Application History — ResumeIQ{% endblock %}
+
+{% block extra_head %}
+<style>
+  .hist-card{display:flex;align-items:center;gap:14px;flex-wrap:wrap;cursor:pointer;transition:border-color .2s}
+  .hist-card:hover{border-color:#ea580c}
+  .score-bubble{width:54px;height:54px;border-radius:50%;border:3px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .detail-panel{display:none;animation:fadeUp .3s ease}
+  .detail-panel.open{display:block}
+  .out-tabs2{display:flex;gap:3px;background:#f3f4f2;border-radius:8px;padding:3px;margin-bottom:12px}
+  .out-tab2{flex:1;font-family:'Inter',sans-serif;font-size:11px;text-align:center;padding:6px;border-radius:6px;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .2s}
+  .out-tab2.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .output-box{background:#f3f4f2;border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;color:var(--text);line-height:1.75;white-space:pre-wrap;min-height:80px;position:relative}
+  .copy-fab{position:absolute;top:8px;right:8px;font-family:'Inter',sans-serif;font-size:10px;background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:3px 8px;cursor:pointer;transition:all .2s}
+  .copy-fab.copied{background:rgba(22,163,74,.15);color:var(--green);border-color:rgba(22,163,74,.3)}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap-sm" style="padding-top:32px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:10px">
+    <div>
+      <h1 class="" style="font-size:1.6rem;font-weight:800;letter-spacing:-.02em">History</h1>
+      <p class="text-muted mono" style="font-size:11px;margin-top:3px">Every analysis you've run — with all outputs</p>
+    </div>
+    <a href="/app" class="btn btn-ghost" style="padding:10px 16px;font-size:12px">← Dashboard</a>
+  </div>
+  <div id="history-content">
+    <div style="text-align:center;padding:48px 0">
+      <div class="spinner" style="margin:0 auto 14px"></div>
+      <p class="label-text text-muted" style="font-size:11px">Loading history...</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function sc(s){return s>=80?'#16a34a':s>=60?'#ea580c':s>=40?'#d97706':'#dc2626'}
+
+async function loadHistory() {
+  const res  = await fetch('/api/history');
+  const json = await res.json();
+  const el   = document.getElementById('history-content');
+
+  if (!json.success) { el.innerHTML = `<div class="alert alert-error">${json.error}</div>`; return; }
+
+  const analyses = json.data.analyses;
+  if (!analyses.length) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:48px 24px">
+      <div style="font-size:32px;margin-bottom:12px">📭</div>
+      <div class=" bold" style="font-size:15px;margin-bottom:8px">No analyses yet</div>
+      <p class="text-muted" style="font-size:13px;line-height:1.65;margin-bottom:20px">
+        Your application history will appear here after your first analysis.
+      </p>
+      <a href="/app" class="btn btn-primary" style="font-size:13px;padding:10px 20px;display:inline-block">Start Analyzing →</a>
+    </div>`;
+    if (json.data.message) {
+      el.innerHTML += `<div class="alert alert-info" style="margin-top:12px">${json.data.message}</div>`;
+    }
+    return;
+  }
+
+  el.innerHTML = analyses.map((a,i) => `
+    <div class="card hist-card" style="margin-bottom:10px" onclick="toggleDetail(${i}, '${a.id}')">
+      <div class="score-bubble" style="border-color:${sc(a.score||0)}">
+        <span class=" bold" style="font-size:16px;color:${sc(a.score||0)}">${a.score||'—'}</span>
+      </div>
+      <div style="flex:1;min-width:150px">
+        <div class=" bold" style="font-size:14px">${a.job_title}</div>
+        <div class="text-muted" style="font-size:12px">${a.company}</div>
+        <div class="label-text text-muted" style="font-size:10px;margin-top:2px">
+          ${new Date(a.created_at).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}
+          · Grade: <span style="color:${sc(a.score||0)}">${a.grade||'—'}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+        ${a.has_resume  ? '<span class="tag tag-match" style="font-size:10px">📄 Resume</span>'  : ''}
+        ${a.has_cover   ? '<span class="tag tag-match" style="font-size:10px">✍️ Cover</span>'   : ''}
+        ${a.has_email   ? '<span class="tag tag-match" style="font-size:10px">📧 Email</span>'   : ''}
+        <span class="label-text text-muted" style="font-size:13px">›</span>
+      </div>
+    </div>
+    <div class="detail-panel" id="detail-${i}">
+      <div class="card" style="margin-bottom:10px;border-top:none;border-radius:0 0 14px 14px;margin-top:-10px;padding-top:20px" id="detail-content-${i}">
+        <div style="text-align:center;padding:16px">
+          <div class="spinner" style="margin:0 auto 10px"></div>
+          <p class="label-text text-muted" style="font-size:11px">Loading...</p>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+let _openIdx = null;
+async function toggleDetail(idx, id) {
+  const panel = document.getElementById('detail-'+idx);
+  const isOpen = panel.classList.contains('open');
+
+  // Close all panels
+  document.querySelectorAll('.detail-panel').forEach(p => p.classList.remove('open'));
+  _openIdx = null;
+
+  if (isOpen) return;
+
+  panel.classList.add('open');
+  _openIdx = idx;
+
+  // Load detail if not already loaded
+  const content = document.getElementById('detail-content-'+idx);
+  if (content.dataset.loaded) return;
+
+  try {
+    const res  = await fetch(`/api/history/${id}`);
+    const json = await res.json();
+    if (!json.success) { content.innerHTML = `<div class="alert alert-error">${json.error}</div>`; return; }
+
+    renderDetail(content, json.data, id);
+    content.dataset.loaded = '1';
+  } catch(e) {
+    content.innerHTML = `<div class="alert alert-error">Load failed: ${e.message}</div>`;
+  }
+}
+
+function renderDetail(el, d, id) {
+  const ana = d.analysis || {};
+  const s   = ana.sections || {};
+
+  function tag(t,type){return`<span class="tag tag-${type}" style="font-size:11px">${t}</span>`}
+  function tagList(arr,type){return(arr||[]).map(t=>tag(t,type)).join('')}
+
+  let html = `
+    <!-- Summary -->
+    <div style="margin-bottom:14px">
+      <div class=" bold" style="font-size:13px;margin-bottom:6px">📊 Match Summary</div>
+      <p class="text-muted" style="font-size:12px;line-height:1.65">${ana.summary||'—'}</p>
+    </div>
+
+    <!-- Strengths + Gaps -->
+    <div class="grid-2" style="margin-bottom:14px">
+      <div>
+        <div class="label-text" style="font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Strengths</div>
+        ${(ana.strengths||[]).map(t=>`<div style="font-size:12px;color:var(--muted);padding:3px 0;display:flex;gap:6px"><span style="color:var(--green)">✓</span>${t}</div>`).join('')}
+      </div>
+      <div>
+        <div class="label-text" style="font-size:9px;color:var(--red);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Gaps</div>
+        ${(ana.gaps||[]).map(t=>`<div style="font-size:12px;color:var(--muted);padding:3px 0;display:flex;gap:6px"><span style="color:var(--red)">✗</span>${t}</div>`).join('')}
+      </div>
+    </div>`;
+
+  // Outputs if available
+  const hasOutputs = d.resume_rewrite || d.cover_letter || d.recruiter_email;
+  if (hasOutputs) {
+    html += `
+    <div class="label-text" style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Saved Outputs</div>
+    <div class="out-tabs2">
+      ${d.resume_rewrite  ? '<button class="out-tab2 active" onclick="switchHistTab(this,\'hr-res-'+id+'\')">📄 Resume</button>' : ''}
+      ${d.cover_letter    ? '<button class="out-tab2 '+(d.resume_rewrite?'':'active')+'" onclick="switchHistTab(this,\'hr-cov-'+id+'\')">✍️ Cover Letter</button>' : ''}
+      ${d.recruiter_email ? '<button class="out-tab2 '+(d.resume_rewrite||d.cover_letter?'':'active')+'" onclick="switchHistTab(this,\'hr-eml-'+id+'\')">📧 Email</button>' : ''}
+    </div>`;
+
+    if (d.resume_rewrite) {
+      const rw = typeof d.resume_rewrite === 'string' ? d.resume_rewrite : JSON.stringify(d.resume_rewrite, null, 2);
+      html += `<div class="hist-tab-panel" id="hr-res-${id}">
+        <div class="output-box" id="rbox-${id}">${escHtml(rw)}<button class="copy-fab" onclick="copyBox('rbox-${id}',this)">Copy</button></div>
+        <button class="btn btn-green" onclick="dlHistPDF('resume','${id}')" style="font-size:11px;padding:7px 14px;margin-top:8px">⬇ PDF</button>
+      </div>`;
+    }
+    if (d.cover_letter) {
+      html += `<div class="hist-tab-panel" id="hr-cov-${id}" style="${d.resume_rewrite?'display:none':''}">
+        <div class="output-box" id="cbox-${id}">${escHtml(d.cover_letter)}<button class="copy-fab" onclick="copyBox('cbox-${id}',this)">Copy</button></div>
+        <button class="btn btn-green" onclick="dlHistPDF('cover','${id}')" style="font-size:11px;padding:7px 14px;margin-top:8px">⬇ PDF</button>
+      </div>`;
+    }
+    if (d.recruiter_email) {
+      html += `<div class="hist-tab-panel" id="hr-eml-${id}" style="${d.resume_rewrite||d.cover_letter?'display:none':''}">
+        <div class="output-box" id="ebox-${id}">${escHtml(d.recruiter_email)}<button class="copy-fab" onclick="copyBox('ebox-${id}',this)">Copy</button></div>
+      </div>`;
+    }
+  }
+
+  html += `
+  <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+    <button class="btn btn-ghost" onclick="emailSummary('${id}',this)" style="font-size:11px;padding:7px 14px">📧 Email me this summary</button>
+    ${d.job_url ? `<a href="${escHtml(d.job_url)}" target="_blank" class="btn btn-ghost" style="font-size:11px;padding:7px 14px">🔗 View Original JD</a>` : ''}
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+function switchHistTab(btn, panelId) {
+  const container = btn.closest('.card');
+  container.querySelectorAll('.out-tab2').forEach(b => b.classList.remove('active'));
+  container.querySelectorAll('.hist-tab-panel').forEach(p => p.style.display='none');
+  btn.classList.add('active');
+  document.getElementById(panelId).style.display = 'block';
+}
+
+function copyBox(elId, btn) {
+  const el = document.getElementById(elId);
+  const txt = Array.from(el.childNodes).filter(n=>n.nodeType===3).map(n=>n.textContent).join('');
+  navigator.clipboard.writeText(txt.trim()).then(()=>{
+    btn.textContent='✓'; btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+
+async function dlHistPDF(type, id) {
+  const record = await (await fetch(`/api/history/${id}`)).json();
+  if (!record.success) return;
+  const d = record.data;
+
+  let body = { analysis_id: id };
+  let url  = '';
+
+  if (type === 'resume') {
+    body.rewrite = d.resume_rewrite;
+    url = '/api/resume/download';
+  } else {
+    body.text    = d.cover_letter;
+    body.company = d.company;
+    body.role    = d.job_title;
+    url = '/api/cover-letter/download';
+  }
+
+  const res = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if (!res.ok) { alert('PDF download failed.'); return; }
+  const blob = await res.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = type === 'resume' ? 'ResumeIQ_Resume.pdf' : 'ResumeIQ_CoverLetter.pdf';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+async function emailSummary(id, btn) {
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = 'Sending...';
+  const res  = await fetch(`/api/history/${id}/email`, {method:'POST'});
+  const json = await res.json();
+  btn.textContent = json.success ? '✓ Sent!' : '✗ Failed';
+  setTimeout(()=>{ btn.textContent=orig; btn.disabled=false; }, 3000);
+}
+
+function escHtml(t) {
+  if (!t) return '';
+  if (typeof t !== 'string') t = JSON.stringify(t, null, 2);
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+loadHistory();
+</script>
+{% endblock %}

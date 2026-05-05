@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}My Profile — ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="wrap-sm" style="padding-top:32px">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:10px">
+    <div>
+      <h1 class="" style="font-size:1.6rem;font-weight:800;letter-spacing:-.02em">My Profile</h1>
+      <p class="text-muted mono" style="font-size:11px;margin-top:3px">Your knowledge graph — the source of every analysis</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveAll()" style="font-size:13px;padding:10px 20px">Save Changes</button>
+      <a href="/app" class="btn btn-ghost" style="padding:10px 16px;font-size:12px">← Dashboard</a>
+    </div>
+  </div>
+
+  <div id="alert-box"></div>
+
+  <!-- Completeness -->
+  <div class="card yellow-top" style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <span class=" bold" style="font-size:13px">Profile Completeness</span>
+      <span class="label-text text-accent" id="completeness-pct">—</span>
+    </div>
+    <div class="progress">
+      <div class="progress-fill" id="completeness-bar" style="background:var(--accent)"></div>
+    </div>
+    <p class="text-muted" style="font-size:11px;margin-top:6px">A complete profile means faster, more accurate analyses.</p>
+  </div>
+
+  <!-- Identity -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="label">Identity</div>
+    <div class="grid-2">
+      <div class="field"><label class="label" style="font-size:10px">Name</label><input class="input" id="p-name"></div>
+      <div class="field"><label class="label" style="font-size:10px">Location</label><input class="input" id="p-location"></div>
+      <div class="field">
+        <label class="label" style="font-size:10px">Career Level</label>
+        <select class="input" id="p-career-level">
+          <option value="fresher">Fresher (0–2 years)</option>
+          <option value="mid">Mid-Career (2–8 years)</option>
+          <option value="senior">Senior (8+ years)</option>
+        </select>
+      </div>
+      <div class="field"><label class="label" style="font-size:10px">Years Experience</label><input class="input" id="p-years" type="number" min="0" max="40"></div>
+    </div>
+    <div class="field"><label class="label" style="font-size:10px">Target Roles (comma separated)</label><input class="input" id="p-target-roles" placeholder="Data Scientist, ML Engineer"></div>
+  </div>
+
+  <!-- Education -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="label">Education</div>
+    <div class="grid-2">
+      <div class="field"><label class="label" style="font-size:10px">Degree</label><input class="input" id="p-degree" placeholder="MS Data Science"></div>
+      <div class="field"><label class="label" style="font-size:10px">Institution</label><input class="input" id="p-institution"></div>
+      <div class="field"><label class="label" style="font-size:10px">Year</label><input class="input" id="p-edu-year" type="number"></div>
+    </div>
+  </div>
+
+  <!-- Certifications -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="label">Certifications</div>
+    <textarea class="input" id="p-certs" rows="4" placeholder="One per line. Include year.&#10;AWS Solutions Architect Professional (2024)&#10;TensorFlow Developer Certificate (2023)"></textarea>
+    <p class="text-muted mono" style="font-size:10px;margin-top:5px">Include year in brackets — helps assess recency during matching.</p>
+  </div>
+
+  <!-- Skills -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="label">Technical Skills</div>
+    <div class="grid-3">
+      <div class="field">
+        <label class="label" style="font-size:10px">Expert</label>
+        <textarea class="input" id="p-skills-expert" rows="4" placeholder="Python&#10;SQL&#10;TensorFlow"></textarea>
+      </div>
+      <div class="field">
+        <label class="label" style="font-size:10px">Proficient</label>
+        <textarea class="input" id="p-skills-proficient" rows="4" placeholder="AWS&#10;Docker&#10;Spark"></textarea>
+      </div>
+      <div class="field">
+        <label class="label" style="font-size:10px">Familiar</label>
+        <textarea class="input" id="p-skills-familiar" rows="4" placeholder="Kubernetes&#10;Go&#10;Rust"></textarea>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label class="label" style="font-size:10px">Soft Skills (comma separated)</label>
+      <input class="input" id="p-soft-skills" placeholder="leadership, communication, stakeholder management">
+    </div>
+  </div>
+
+  <!-- Projects (read-only summary) -->
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="label" style="margin-bottom:0">Projects</div>
+      <span class="label-text text-muted" style="font-size:10px" id="proj-count"></span>
+    </div>
+    <div id="projects-display"></div>
+    <p class="text-muted" style="font-size:11px;margin-top:10px">
+      To update projects, re-upload your resume with the latest version.
+    </p>
+  </div>
+
+  <!-- Subscription -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="label">Subscription</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <div class=" bold" style="font-size:14px;margin-bottom:3px">
+          {{ user.tier_label }} Plan
+        </div>
+        <p class="text-muted" style="font-size:12px">
+          {% if user.tier == 'free' %}
+            3 analyses per month. Upgrade to unlock resume rewrites and cover letters.
+          {% elif user.tier == 'job_hunter' %}
+            Unlimited analyses, resume rewrite, STAR cover letter, recruiter email.
+          {% else %}
+            Full access — all features unlocked.
+          {% endif %}
+        </p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        {% if user.tier == 'free' %}
+          <a href="/pricing" class="btn btn-primary" style="font-size:12px;padding:8px 16px">Upgrade →</a>
+        {% else %}
+          <a href="/billing/portal" class="btn btn-ghost" style="font-size:12px;padding:8px 16px">Manage Subscription</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Danger Zone -->
+  <div class="card" style="margin-bottom:24px;border-color:rgba(248,113,113,.3)">
+    <div class="label" style="color:var(--red)">Danger Zone</div>
+    <p class="text-muted" style="font-size:13px;margin-bottom:12px">Permanently delete your account and all associated data. This cannot be undone.</p>
+    <form action="/auth/delete-account" method="POST"
+      onsubmit="return confirm('Are you absolutely sure? This deletes your account and all data permanently.')">
+      <button type="submit" class="btn btn-danger" style="padding:8px 16px">Delete My Account</button>
+    </form>
+  </div>
+
+</div>
+
+<script>
+async function loadProfile() {
+  const res  = await fetch('/api/profile');
+  const json = await res.json();
+  if (!json.success) return;
+  const { knowledge_graph: kg, user } = json.data;
+  const g = kg.graph || {};
+  const id = g.identity || {};
+  const ed = g.education || {};
+  const sk = g.skills || {};
+
+  document.getElementById('p-name').value          = id.name || '';
+  document.getElementById('p-location').value      = id.location || '';
+  document.getElementById('p-career-level').value  = id.career_level || 'mid';
+  document.getElementById('p-years').value         = id.years_experience || 0;
+  document.getElementById('p-target-roles').value  = (id.target_roles||[]).join(', ');
+  document.getElementById('p-degree').value        = ed.degree || '';
+  document.getElementById('p-institution').value   = ed.institution || '';
+  document.getElementById('p-edu-year').value      = ed.year || '';
+  document.getElementById('p-certs').value         = (g.certifications||[]).join('\n');
+
+  const tech = sk.technical || {};
+  document.getElementById('p-skills-expert').value     = (tech.expert||[]).join('\n');
+  document.getElementById('p-skills-proficient').value = (tech.proficient||[]).join('\n');
+  document.getElementById('p-skills-familiar').value   = (tech.familiar||[]).join('\n');
+  document.getElementById('p-soft-skills').value       = (sk.soft||[]).join(', ');
+
+  // Completeness
+  const c = kg.completeness || 0;
+  document.getElementById('completeness-pct').textContent = c + '%';
+  setTimeout(() => {
+    const bar = document.getElementById('completeness-bar');
+    bar.style.width = c + '%';
+    bar.style.background = c>=80?'var(--green)':c>=50?'var(--accent)':'var(--yellow)';
+  }, 100);
+
+  // Projects
+  const projs = g.projects || [];
+  document.getElementById('proj-count').textContent = projs.length + ' projects';
+  document.getElementById('projects-display').innerHTML = projs.length
+    ? projs.map(p => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div class=" bold" style="font-size:13px;margin-bottom:3px">${p.name}</div>
+        <div class="text-muted" style="font-size:12px;line-height:1.55;margin-bottom:5px">${p.summary}</div>
+        <div>${(p.keywords||[]).slice(0,6).map(k=>`<span class="tag tag-neutral">${k}</span>`).join('')}</div>
+        <div class="label-text text-muted" style="font-size:10px;margin-top:4px">Impact score: ${p.impact_score||'—'}/10</div>
+      </div>`).join('')
+    : '<p class="text-muted" style="font-size:12px">No projects detected. Re-upload a resume that includes project details.</p>';
+}
+
+async function saveAll() {
+  const tech_expert     = document.getElementById('p-skills-expert').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const tech_proficient = document.getElementById('p-skills-proficient').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const tech_familiar   = document.getElementById('p-skills-familiar').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const soft            = document.getElementById('p-soft-skills').value.split(',').map(s=>s.trim()).filter(Boolean);
+
+  const updates = [
+    { field: 'identity', value: {
+        name:             document.getElementById('p-name').value,
+        location:         document.getElementById('p-location').value,
+        career_level:     document.getElementById('p-career-level').value,
+        years_experience: parseInt(document.getElementById('p-years').value)||0,
+        target_roles:     document.getElementById('p-target-roles').value.split(',').map(s=>s.trim()).filter(Boolean),
+    }},
+    { field: 'education', value: {
+        degree:      document.getElementById('p-degree').value,
+        institution: document.getElementById('p-institution').value,
+        year:        parseInt(document.getElementById('p-edu-year').value)||null,
+    }},
+    { field: 'certifications', value: document.getElementById('p-certs').value.split('\n').map(s=>s.trim()).filter(Boolean) },
+    { field: 'skills', value: {
+        technical: { expert: tech_expert, proficient: tech_proficient, familiar: tech_familiar },
+        soft,
+    }},
+  ];
+
+  for (const u of updates) {
+    await fetch('/api/profile/update', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(u)
+    });
+  }
+
+  showAlert('Profile saved successfully!', 'success');
+  loadProfile(); // refresh completeness
+}
+
+function showAlert(msg, type) {
+  const b = document.getElementById('alert-box');
+  b.innerHTML = `<div class="alert alert-${type}" style="margin-bottom:12px">${msg}</div>`;
+  setTimeout(() => b.innerHTML='', 4000);
+}
+
+loadProfile();
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} — ResumeIQ{% endblock %}
+{% block content %}
+<div class="wrap-sm" style="text-align:center;padding:80px 20px">
+  <div style="font-size:48px;margin-bottom:16px">{% if code == 404 %}🔍{% else %}⚡{% endif %}</div>
+  <div class=" bold" style="font-size:3rem;color:var(--accent);margin-bottom:8px">{{ code }}</div>
+  <div class="" style="font-size:1.2rem;font-weight:700;margin-bottom:12px">{{ message }}</div>
+  <p class="text-muted" style="font-size:13px;margin-bottom:24px">
+    {% if code == 404 %}This page doesn't exist.{% else %}Something went wrong on our end.{% endif %}
+  </p>
+  <a href="/" class="btn btn-primary" style="font-size:13px;padding:10px 24px">← Go Home</a>
+</div>
+{% endblock %}

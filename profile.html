@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+{% block title %}Set Up Your Profile — ResumeIQ{% endblock %}
+
+{% block content %}
+<div class="wrap-sm">
+  <div style="text-align:center; padding: 48px 0 32px; animation: fadeUp .5s ease;">
+    <div class="label-text text-accent" style="letter-spacing:.14em; text-transform:uppercase; margin-bottom:14px">
+      One-Time Setup
+    </div>
+    <h1 class="" style="font-size: clamp(2rem,4vw,2.8rem); font-weight:800; letter-spacing:-.03em; margin-bottom:12px; line-height:1.1">
+      Build Your Career<br>
+      <span style="background:linear-gradient(135deg,#ea580c,#fcd34d,#16a34a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">
+        Intelligence Profile
+      </span>
+    </h1>
+    <p class="text-muted" style="font-size:14px; line-height:1.7; max-width:460px; margin:0 auto">
+      Upload your resume once. We extract a structured knowledge graph from it.
+      Every future job analysis takes just seconds — no re-uploading, ever.
+    </p>
+  </div>
+
+  <!-- Progress steps -->
+  <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:32px;">
+    <div id="step-1-indicator" style="display:flex;align-items:center;gap:6px;font-size:12px;font-family:monospace;color:var(--accent)">
+      <span style="width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">1</span>
+      Upload Resume
+    </div>
+    <div style="flex:1;height:1px;background:var(--border);max-width:60px"></div>
+    <div id="step-2-indicator" style="display:flex;align-items:center;gap:6px;font-size:12px;font-family:monospace;color:var(--muted)">
+      <span style="width:22px;height:22px;border-radius:50%;background:#f3f4f2;border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:11px">2</span>
+      Review Profile
+    </div>
+    <div style="flex:1;height:1px;background:var(--border);max-width:60px"></div>
+    <div id="step-3-indicator" style="display:flex;align-items:center;gap:6px;font-size:12px;font-family:monospace;color:var(--muted)">
+      <span style="width:22px;height:22px;border-radius:50%;background:#f3f4f2;border:1px solid var(--border);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:11px">3</span>
+      Ready to Apply
+    </div>
+  </div>
+
+  <div id="alert-box"></div>
+
+  <!-- STEP 1: Upload -->
+  <div id="step-upload">
+    <div class="card" style="margin-bottom:16px">
+      <div class="label">Your Resume</div>
+
+      <div id="drop-zone" onclick="document.getElementById('resume-file').click()"
+        style="border:1.5px dashed var(--border);border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-bottom:12px;transition:all .2s">
+        <div style="font-size:28px;margin-bottom:8px">📄</div>
+        <div style="font-size:14px;color:var(--muted)">
+          <strong style="color:var(--text)">Click or drag &amp; drop</strong>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">PDF · DOCX · TXT — up to 10MB</div>
+        <div id="file-name" style="font-family:monospace;font-size:12px;color:var(--green);margin-top:6px;min-height:16px"></div>
+        <input type="file" id="resume-file" accept=".pdf,.doc,.docx,.txt" style="display:none">
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:11px;font-family:monospace;margin:10px 0">
+        <div style="flex:1;height:1px;background:var(--border)"></div>or paste text<div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+
+      <textarea class="input" id="resume-text" rows="8"
+        placeholder="Paste your resume text here...&#10;&#10;Jane Smith&#10;Data Scientist | 4 years experience&#10;Skills: Python, TensorFlow, SQL, AWS..."></textarea>
+    </div>
+
+    <div style="text-align:center">
+      <button class="btn btn-primary" id="upload-btn" onclick="uploadResume()" style="min-width:200px">
+        ✦ Build My Profile
+      </button>
+      <p class="text-muted" style="font-size:11px;margin-top:10px;font-family:monospace">
+        ~$0.01 one-time extraction cost · Stored securely · Delete anytime
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP 2: Processing -->
+  <div id="step-processing" style="display:none;text-align:center;padding:48px 0">
+    <div class="spinner" style="margin:0 auto 16px"></div>
+    <div class="" style="font-size:16px;font-weight:700;margin-bottom:8px">Building your profile...</div>
+    <p id="processing-msg" class="text-muted mono" style="animation:pulse 1.8s ease infinite">
+      Extracting skills and experience...
+    </p>
+  </div>
+
+  <!-- STEP 3: Review -->
+  <div id="step-review" style="display:none;animation:fadeUp .5s ease">
+    <div class="card green-top" style="margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
+      <span style="font-size:22px">✅</span>
+      <div>
+        <div class=" bold" style="font-size:15px;margin-bottom:4px">Profile extracted successfully!</div>
+        <p class="text-muted" style="font-size:13px;line-height:1.65">
+          Review what we found below. You can edit anything before saving.
+        </p>
+      </div>
+    </div>
+
+    <!-- Identity -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="label">Identity</div>
+      <div class="grid-2">
+        <div class="field">
+          <label class="label" style="font-size:10px">Name</label>
+          <input class="input" id="r-name" type="text">
+        </div>
+        <div class="field">
+          <label class="label" style="font-size:10px">Location</label>
+          <input class="input" id="r-location" type="text">
+        </div>
+        <div class="field">
+          <label class="label" style="font-size:10px">Career Level</label>
+          <select class="input" id="r-career-level">
+            <option value="fresher">Fresher (0–2 years)</option>
+            <option value="mid">Mid-Career (2–8 years)</option>
+            <option value="senior">Senior (8+ years)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label" style="font-size:10px">Years of Experience</label>
+          <input class="input" id="r-years" type="number" min="0" max="40">
+        </div>
+      </div>
+      <div class="field">
+        <label class="label" style="font-size:10px">Target Roles (comma separated)</label>
+        <input class="input" id="r-target-roles" type="text" placeholder="Data Scientist, ML Engineer">
+      </div>
+    </div>
+
+    <!-- Education -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="label">Education</div>
+      <div class="grid-2">
+        <div class="field">
+          <label class="label" style="font-size:10px">Degree</label>
+          <input class="input" id="r-degree" type="text" placeholder="MS Data Science">
+        </div>
+        <div class="field">
+          <label class="label" style="font-size:10px">Institution</label>
+          <input class="input" id="r-institution" type="text">
+        </div>
+        <div class="field">
+          <label class="label" style="font-size:10px">Year</label>
+          <input class="input" id="r-edu-year" type="number">
+        </div>
+      </div>
+    </div>
+
+    <!-- Certifications -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="label">Certifications</div>
+      <textarea class="input" id="r-certs" rows="3"
+        placeholder="AWS Solutions Architect Professional (2024)&#10;TensorFlow Developer Certificate (2023)"></textarea>
+      <div class="text-muted mono" style="font-size:10px;margin-top:4px">One per line — include year in brackets</div>
+    </div>
+
+    <!-- Skills preview -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="label">Skills Extracted</div>
+      <div id="r-skills-display"></div>
+      <div class="text-muted" style="font-size:12px;margin-top:8px">
+        You can edit your skills from the Profile page after setup.
+      </div>
+    </div>
+
+    <!-- Projects preview -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="label">Projects Detected</div>
+      <div id="r-projects-display"></div>
+    </div>
+
+    <!-- Completeness -->
+    <div class="card yellow-top" style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span class=" bold" style="font-size:13px">Profile Completeness</span>
+        <span class="label-text text-accent" id="completeness-pct">0%</span>
+      </div>
+      <div class="progress">
+        <div class="progress-fill" id="completeness-bar" style="background:var(--accent)"></div>
+      </div>
+    </div>
+
+    <div style="text-align:center">
+      <button class="btn btn-primary" onclick="saveProfile()" style="min-width:200px">
+        ✦ Save Profile &amp; Start Applying
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+let _extractedGraph = null;
+
+// ── DROP ZONE ──────────────────────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('resume-file');
+const fileName  = document.getElementById('file-name');
+
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.style.borderColor='var(--accent)'; });
+dropZone.addEventListener('dragleave', () => dropZone.style.borderColor='var(--border)');
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.style.borderColor='var(--border)';
+  if (e.dataTransfer.files[0]) { fileInput.files = e.dataTransfer.files; fileName.textContent = '✓ ' + e.dataTransfer.files[0].name; }
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) fileName.textContent = '✓ ' + fileInput.files[0].name; });
+
+// ── PROCESSING MESSAGES ────────────────────────────────────────────────────
+const pMsgs = ['Extracting skills and experience...','Mapping your projects...','Building knowledge graph...','Computing profile completeness...','Almost ready...'];
+let pIdx = 0, pTimer;
+function startProcessing() {
+  const el = document.getElementById('processing-msg');
+  el.textContent = pMsgs[0]; pIdx = 0;
+  pTimer = setInterval(() => { pIdx = (pIdx+1) % pMsgs.length; el.textContent = pMsgs[pIdx]; }, 2000);
+}
+function stopProcessing() { clearInterval(pTimer); }
+
+// ── UPLOAD RESUME ──────────────────────────────────────────────────────────
+async function uploadResume() {
+  const file = fileInput.files[0];
+  const text = document.getElementById('resume-text').value.trim();
+
+  if (!file && !text) { showAlert('Please provide your resume via file upload or text paste.', 'error'); return; }
+
+  document.getElementById('upload-btn').disabled = true;
+  document.getElementById('step-upload').style.display = 'none';
+  document.getElementById('step-processing').style.display = 'block';
+  startProcessing();
+
+  const fd = new FormData();
+  if (file) fd.append('resume_file', file);
+  else fd.append('resume_text', text);
+
+  try {
+    const res  = await fetch('/api/profile/upload', { method: 'POST', body: fd });
+    const json = await res.json();
+    stopProcessing();
+
+    if (!res.ok || !json.success) {
+      document.getElementById('step-upload').style.display = 'block';
+      document.getElementById('step-processing').style.display = 'none';
+      document.getElementById('upload-btn').disabled = false;
+      showAlert(json.error || 'Upload failed. Please try again.', 'error');
+      return;
+    }
+
+    _extractedGraph = json.data.graph;
+    populateReviewForm(_extractedGraph, json.data.completeness);
+    document.getElementById('step-processing').style.display = 'none';
+    document.getElementById('step-review').style.display = 'block';
+    updateStepIndicator(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch(e) {
+    stopProcessing();
+    document.getElementById('step-upload').style.display = 'block';
+    document.getElementById('step-processing').style.display = 'none';
+    document.getElementById('upload-btn').disabled = false;
+    showAlert('Network error: ' + e.message, 'error');
+  }
+}
+
+// ── POPULATE REVIEW FORM ───────────────────────────────────────────────────
+function populateReviewForm(graph, completeness) {
+  const id = graph.identity || {};
+  const ed = graph.education || {};
+  document.getElementById('r-name').value         = id.name || '';
+  document.getElementById('r-location').value     = id.location || '';
+  document.getElementById('r-career-level').value = id.career_level || 'mid';
+  document.getElementById('r-years').value        = id.years_experience || 0;
+  document.getElementById('r-target-roles').value = (id.target_roles || []).join(', ');
+  document.getElementById('r-degree').value       = ed.degree || '';
+  document.getElementById('r-institution').value  = ed.institution || '';
+  document.getElementById('r-edu-year').value     = ed.year || '';
+  document.getElementById('r-certs').value        = (graph.certifications || []).join('\n');
+
+  // Skills preview
+  const skills = graph.skills || {};
+  const tech   = skills.technical || {};
+  let skillHtml = '';
+  if (tech.expert?.length)     skillHtml += `<div style="margin-bottom:6px"><span class="label-text text-muted" style="font-size:10px">EXPERT: </span>${tech.expert.map(s=>`<span class="tag tag-match">${s}</span>`).join('')}</div>`;
+  if (tech.proficient?.length) skillHtml += `<div style="margin-bottom:6px"><span class="label-text text-muted" style="font-size:10px">PROFICIENT: </span>${tech.proficient.map(s=>`<span class="tag tag-bonus">${s}</span>`).join('')}</div>`;
+  if (tech.familiar?.length)   skillHtml += `<div><span class="label-text text-muted" style="font-size:10px">FAMILIAR: </span>${tech.familiar.map(s=>`<span class="tag tag-neutral">${s}</span>`).join('')}</div>`;
+  document.getElementById('r-skills-display').innerHTML = skillHtml || '<span class="text-muted" style="font-size:13px">No skills detected. You can add them from the Profile page.</span>';
+
+  // Projects preview
+  const projects = graph.projects || [];
+  let projHtml = '';
+  if (projects.length) {
+    projects.slice(0,4).forEach(p => {
+      projHtml += `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+        <div class=" bold" style="font-size:13px;margin-bottom:3px">${p.name || 'Project'}</div>
+        <div class="text-muted" style="font-size:12px;line-height:1.55">${p.summary || ''}</div>
+        <div style="margin-top:5px">${(p.keywords||[]).slice(0,5).map(k=>`<span class="tag tag-neutral">${k}</span>`).join('')}</div>
+      </div>`;
+    });
+  } else {
+    projHtml = '<span class="text-muted" style="font-size:13px">No projects detected. You can add them from the Profile page.</span>';
+  }
+  document.getElementById('r-projects-display').innerHTML = projHtml;
+
+  // Completeness bar
+  document.getElementById('completeness-pct').textContent = completeness + '%';
+  setTimeout(() => {
+    const bar = document.getElementById('completeness-bar');
+    bar.style.width = completeness + '%';
+    const color = completeness >= 80 ? 'var(--green)' : completeness >= 50 ? 'var(--accent)' : 'var(--yellow)';
+    bar.style.background = color;
+  }, 100);
+}
+
+// ── SAVE PROFILE ───────────────────────────────────────────────────────────
+async function saveProfile() {
+  if (!_extractedGraph) return;
+
+  // Merge review edits back into graph
+  const updated = { ..._extractedGraph };
+  updated.identity = {
+    ...updated.identity,
+    name:             document.getElementById('r-name').value,
+    location:         document.getElementById('r-location').value,
+    career_level:     document.getElementById('r-career-level').value,
+    years_experience: parseInt(document.getElementById('r-years').value) || 0,
+    target_roles:     document.getElementById('r-target-roles').value.split(',').map(s=>s.trim()).filter(Boolean),
+  };
+  updated.education = {
+    ...updated.education,
+    degree:      document.getElementById('r-degree').value,
+    institution: document.getElementById('r-institution').value,
+    year:        parseInt(document.getElementById('r-edu-year').value) || null,
+  };
+  updated.certifications = document.getElementById('r-certs').value
+    .split('\n').map(s=>s.trim()).filter(Boolean);
+
+  // Save updated identity fields
+  const fields = ['identity', 'education', 'certifications'];
+  for (const field of fields) {
+    await fetch('/api/profile/update', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ field, value: updated[field] })
+    });
+  }
+
+  updateStepIndicator(3);
+  setTimeout(() => { window.location.href = '/app'; }, 800);
+}
+
+function updateStepIndicator(step) {
+  [1,2,3].forEach(s => {
+    const ind = document.getElementById(`step-${s}-indicator`);
+    const circle = ind.querySelector('span');
+    if (s < step) {
+      circle.style.background = 'var(--green)'; circle.style.color = '#f3f4f2';
+      circle.textContent = '✓';
+      ind.style.color = 'var(--green)';
+    } else if (s === step) {
+      circle.style.background = 'var(--accent)'; circle.style.color = '#fff';
+      ind.style.color = 'var(--accent)';
+    }
+  });
+}
+
+function showAlert(msg, type='error') {
+  const box = document.getElementById('alert-box');
+  box.innerHTML = `<div class="alert alert-${type}">⚠ ${msg}</div>`;
+}
+</script>
+{% endblock %}

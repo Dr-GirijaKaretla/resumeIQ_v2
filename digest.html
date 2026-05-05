@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}Application Tracker — ResumeIQ{% endblock %}
+
+{% block extra_head %}
+<style>
+  .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:24px}
+  .col-hdr{font-family:'Inter',sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:.1em;padding:8px 12px;border-radius:7px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .app-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .2s;position:relative}
+  .app-card:hover{border-color:#ea580c}
+  .app-score{width:32px;height:32px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;flex-shrink:0}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;position:relative}
+  .modal-close{position:absolute;top:14px;right:14px;background:#f3f4f2;border:1px solid var(--border);border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--muted)}
+  .status-btn{font-family:'Inter',sans-serif;font-size:10px;padding:4px 10px;border-radius:5px;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all .2s}
+  .status-btn.sel{color:#fff}
+  .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+  @media(max-width:600px){.stats-strip{grid-template-columns:repeat(2,1fr)}.board{grid-template-columns:1fr}}
+  .add-fab{position:fixed;bottom:28px;right:28px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#fcd34d);border:none;color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 20px var(--glow);display:flex;align-items:center;justify-content:center;z-index:100;transition:transform .2s}
+  .add-fab:hover{transform:scale(1.1)}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap" style="padding-top:28px;max-width:1100px">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <div>
+      <h1 class="" style="font-size:1.5rem;font-weight:800;letter-spacing:-.02em">📋 Application Tracker</h1>
+      <p class="text-muted mono" style="font-size:11px;margin-top:3px">Track every application from saved to offer</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAddModal()" style="font-size:13px;padding:10px 18px">+ Add Application</button>
+  </div>
+
+  <!-- Stats Strip -->
+  <div class="stats-strip" id="stats-strip">
+    <div class="card" style="text-align:center;padding:14px 10px"><div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:5px">Total</div><div class=" bold" style="font-size:24px" id="stat-total">—</div></div>
+    <div class="card" style="text-align:center;padding:14px 10px"><div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:5px">Active</div><div class=" bold" style="font-size:24px;color:var(--accent)" id="stat-active">—</div></div>
+    <div class="card" style="text-align:center;padding:14px 10px"><div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:5px">Interviews</div><div class=" bold" style="font-size:24px;color:var(--yellow)" id="stat-interview">—</div></div>
+    <div class="card" style="text-align:center;padding:14px 10px"><div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:5px">Offers</div><div class=" bold" style="font-size:24px;color:var(--green)" id="stat-offers">—</div></div>
+  </div>
+
+  <!-- Board -->
+  <div class="board" id="board"></div>
+  <div id="empty-state" style="display:none;text-align:center;padding:48px 0">
+    <div style="font-size:36px;margin-bottom:12px">📋</div>
+    <div class=" bold" style="font-size:15px;margin-bottom:8px">No applications tracked yet</div>
+    <p class="text-muted" style="font-size:13px;margin-bottom:20px">Start adding jobs you've applied to — track them from saved to offer.</p>
+    <button class="btn btn-primary" onclick="openAddModal()" style="font-size:13px;padding:10px 20px">+ Add First Application</button>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="add-fab" onclick="openAddModal()" title="Add Application">+</button>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-close" onclick="closeModal()">✕</div>
+    <h2 class="" style="font-size:1.1rem;font-weight:800;margin-bottom:16px" id="modal-title">Add Application</h2>
+    <input type="hidden" id="edit-id">
+
+    <div class="grid-2" style="gap:10px;margin-bottom:10px">
+      <div class="field" style="margin-bottom:0"><label class="label" style="font-size:10px">Job Title *</label><input class="input" id="f-title" placeholder="Senior Data Scientist" style="font-size:13px"></div>
+      <div class="field" style="margin-bottom:0"><label class="label" style="font-size:10px">Company *</label><input class="input" id="f-company" placeholder="Acme Corp" style="font-size:13px"></div>
+      <div class="field" style="margin-bottom:0"><label class="label" style="font-size:10px">Location</label><input class="input" id="f-location" placeholder="Sydney or Remote" style="font-size:13px"></div>
+      <div class="field" style="margin-bottom:0"><label class="label" style="font-size:10px">Salary Range</label><input class="input" id="f-salary" placeholder="$90k–$120k" style="font-size:13px"></div>
+      <div class="field" style="margin-bottom:0"><label class="label" style="font-size:10px">Applied Date</label><input class="input" id="f-applied" type="date" style="font-size:13px"></div>
+      <div class="field" style="margin-bottom:0"><label class="label" style="font-size:10px">Follow-up Date</label><input class="input" id="f-followup" type="date" style="font-size:13px"></div>
+    </div>
+
+    <div class="field" style="margin-bottom:10px"><label class="label" style="font-size:10px">Job URL</label><input class="input" id="f-url" type="url" placeholder="https://..." style="font-size:13px"></div>
+
+    <div class="field" style="margin-bottom:10px">
+      <label class="label" style="font-size:10px">Status</label>
+      <div style="display:flex;flex-wrap:wrap;gap:5px" id="status-btns"></div>
+    </div>
+
+    <div class="field" style="margin-bottom:16px"><label class="label" style="font-size:10px">Notes</label><textarea class="input" id="f-notes" rows="3" placeholder="Interview notes, contacts, follow-up actions..." style="font-size:13px"></textarea></div>
+
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveApp()" style="flex:1;font-size:13px;padding:11px">Save</button>
+      <button class="btn btn-ghost" id="delete-btn" onclick="deleteApp()" style="font-size:12px;padding:11px;display:none;color:var(--red);border-color:rgba(248,113,113,.3)">Delete</button>
+      <button class="btn btn-ghost" onclick="closeModal()" style="font-size:12px;padding:11px">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATUS_CONFIG = {
+  saved:     {label:'Saved',     color:'#5a6772', icon:'🔖'},
+  applied:   {label:'Applied',   color:'#ea580c', icon:'📤'},
+  screening: {label:'Screening', color:'#d97706', icon:'📞'},
+  interview: {label:'Interview', color:'#f0a500', icon:'🎤'},
+  offer:     {label:'Offer',     color:'#16a34a', icon:'🎉'},
+  accepted:  {label:'Accepted',  color:'#22c77a', icon:'✅'},
+  rejected:  {label:'Rejected',  color:'#dc2626', icon:'❌'},
+  withdrawn: {label:'Withdrawn', color:'#888',    icon:'↩'},
+};
+
+let _apps = [];
+let _selStatus = 'applied';
+
+function sc(s){return s>=80?'#16a34a':s>=60?'#ea580c':s>=40?'#d97706':'#dc2626'}
+
+// Load tracker data
+async function loadTracker() {
+  const res  = await fetch('/api/tracker');
+  const json = await res.json();
+  if (!json.success) return;
+  _apps = json.data.applications;
+  renderBoard();
+  renderStats();
+}
+
+function renderStats() {
+  const active    = _apps.filter(a=>!['rejected','withdrawn','accepted'].includes(a.status)).length;
+  const interviews= _apps.filter(a=>a.status==='interview').length;
+  const offers    = _apps.filter(a=>['offer','accepted'].includes(a.status)).length;
+  document.getElementById('stat-total').textContent     = _apps.length;
+  document.getElementById('stat-active').textContent    = active;
+  document.getElementById('stat-interview').textContent = interviews;
+  document.getElementById('stat-offers').textContent    = offers;
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  const empty = document.getElementById('empty-state');
+
+  if (!_apps.length) { board.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+
+  // Group by status
+  const groups = {};
+  Object.keys(STATUS_CONFIG).forEach(s => groups[s] = []);
+  _apps.forEach(a => { if(groups[a.status]) groups[a.status].push(a); });
+
+  // Only show columns that have apps or are key pipeline stages
+  const showStatuses = Object.keys(STATUS_CONFIG).filter(s =>
+    groups[s].length > 0 || ['applied','screening','interview','offer'].includes(s)
+  );
+
+  board.innerHTML = showStatuses.map(status => {
+    const cfg  = STATUS_CONFIG[status];
+    const apps = groups[status] || [];
+    const cards = apps.map(a => `
+      <div class="app-card" onclick="openEditModal('${a.id}')">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+          ${a.match_score ? `<div class="app-score" style="border-color:${sc(a.match_score)};color:${sc(a.match_score)}">${a.match_score}</div>` : `<div style="width:32px;height:32px;border-radius:50%;background:#f3f4f2;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px">${cfg.icon}</div>`}
+          <div style="flex:1;min-width:0">
+            <div class=" bold" style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.job_title)}</div>
+            <div class="text-muted" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.company)}</div>
+          </div>
+        </div>
+        ${a.salary_range ? `<div class="label-text" style="font-size:10px;color:var(--green);margin-bottom:3px">${esc(a.salary_range)}</div>` : ''}
+        ${a.follow_up_date ? `<div class="label-text" style="font-size:10px;color:var(--yellow)">Follow up: ${a.follow_up_date}</div>` : ''}
+        ${a.applied_date ? `<div class="label-text text-muted" style="font-size:10px">Applied: ${a.applied_date}</div>` : ''}
+      </div>`).join('');
+
+    return `<div>
+      <div class="col-hdr" style="background:${cfg.color}15;color:${cfg.color};border:1px solid ${cfg.color}30">
+        <span>${cfg.icon} ${cfg.label}</span>
+        <span class="label-text" style="font-size:10px">${apps.length}</span>
+      </div>
+      ${cards}
+    </div>`;
+  }).join('');
+}
+
+// Status buttons for modal
+function renderStatusBtns(current) {
+  document.getElementById('status-btns').innerHTML = Object.entries(STATUS_CONFIG).map(([s,c])=>`
+    <button class="status-btn ${s===current?'sel':''}" id="sbtn-${s}"
+      style="${s===current?`background:${c.color};border-color:${c.color}`:''}"
+      onclick="selectStatus('${s}')">${c.icon} ${c.label}</button>`).join('');
+}
+
+function selectStatus(s) {
+  _selStatus = s;
+  renderStatusBtns(s);
+}
+
+function openAddModal() {
+  _selStatus = 'applied';
+  document.getElementById('modal-title').textContent = 'Add Application';
+  document.getElementById('edit-id').value = '';
+  document.getElementById('delete-btn').style.display = 'none';
+  ['f-title','f-company','f-location','f-salary','f-url','f-notes'].forEach(id=>document.getElementById(id).value='');
+  ['f-applied','f-followup'].forEach(id=>document.getElementById(id).value='');
+  renderStatusBtns('applied');
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const app = _apps.find(a=>a.id===id);
+  if (!app) return;
+  _selStatus = app.status;
+  document.getElementById('modal-title').textContent = 'Edit Application';
+  document.getElementById('edit-id').value    = id;
+  document.getElementById('f-title').value    = app.job_title||'';
+  document.getElementById('f-company').value  = app.company||'';
+  document.getElementById('f-location').value = app.location||'';
+  document.getElementById('f-salary').value   = app.salary_range||'';
+  document.getElementById('f-url').value      = app.job_url||'';
+  document.getElementById('f-notes').value    = app.notes||'';
+  document.getElementById('f-applied').value  = app.applied_date||'';
+  document.getElementById('f-followup').value = app.follow_up_date||'';
+  document.getElementById('delete-btn').style.display = 'block';
+  renderStatusBtns(app.status);
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+async function saveApp() {
+  const id    = document.getElementById('edit-id').value;
+  const title = document.getElementById('f-title').value.trim();
+  const co    = document.getElementById('f-company').value.trim();
+  if (!title||!co) { alert('Job title and company are required.'); return; }
+
+  const payload = {
+    job_title:     title,
+    company:       co,
+    location:      document.getElementById('f-location').value.trim(),
+    salary_range:  document.getElementById('f-salary').value.trim(),
+    job_url:       document.getElementById('f-url').value.trim(),
+    notes:         document.getElementById('f-notes').value.trim(),
+    status:        _selStatus,
+    applied_date:  document.getElementById('f-applied').value||null,
+    follow_up_date:document.getElementById('f-followup').value||null,
+  };
+
+  const url    = id ? `/api/tracker/${id}` : '/api/tracker';
+  const method = id ? 'PUT' : 'POST';
+
+  const res  = await fetch(url,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const json = await res.json();
+  if (!json.success) { alert(json.error||'Save failed'); return; }
+
+  closeModal();
+  loadTracker();
+}
+
+async function deleteApp() {
+  const id = document.getElementById('edit-id').value;
+  if (!id||!confirm('Delete this application?')) return;
+  await fetch(`/api/tracker/${id}`,{method:'DELETE'});
+  closeModal();
+  loadTracker();
+}
+
+function esc(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// Close modal on backdrop click
+document.getElementById('modal').addEventListener('click', e=>{
+  if(e.target===document.getElementById('modal')) closeModal();
+});
+
+loadTracker();
+</script>
+{% endblock %}

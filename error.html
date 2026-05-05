@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Welcome to ResumeIQ {{ user.tier_label }}!{% endblock %}
+{% block content %}
+<div class="wrap-sm" style="text-align:center;padding:80px 20px">
+
+  <div style="width:80px;height:80px;border-radius:50%;background:rgba(22,163,74,.15);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:36px">
+    🎉
+  </div>
+
+  <h1 class="" style="font-size:2rem;font-weight:800;letter-spacing:-.03em;margin-bottom:12px">
+    You're on
+    <span style="color:var(--green)">{{ user.tier_label }}</span>!
+  </h1>
+
+  <p class="text-muted" style="font-size:14px;line-height:1.75;max-width:440px;margin:0 auto 32px">
+    Your subscription is active. You now have access to resume rewrites,
+    STAR cover letters, recruiter emails, and unlimited analyses.
+  </p>
+
+  <!-- What's unlocked -->
+  <div class="card" style="text-align:left;margin-bottom:24px;max-width:440px;margin-left:auto;margin-right:auto">
+    <div class=" bold" style="font-size:13px;margin-bottom:14px">✦ Now unlocked for you</div>
+    {% set features = {
+      'job_hunter': [
+        ('📄','Resume rewrite — tailored PDF for every job'),
+        ('✍️','STAR cover letter — Situation Task Action Result'),
+        ('📧','Recruiter email — compressed STAR, 7 sentences'),
+        ('🎯','Full keyword intelligence with placement guidance'),
+        ('📊','Unlimited analyses per month'),
+        ('🗂','Last 10 applications saved'),
+      ],
+      'career_pro': [
+        ('📄','Resume PDF + DOCX download'),
+        ('🎨','Cover letter tone selector — Formal / Startup / Creative / Warm'),
+        ('🎤','Interview prep pack — questions + answers from your experience'),
+        ('💼','LinkedIn profile optimizer'),
+        ('📊','Unlimited analyses + full history'),
+        ('🚀','Multi-resume versions for different roles'),
+        ('⚡','Priority support'),
+      ]
+    } %}
+    {% for icon, label in features.get(user.tier, features['job_hunter']) %}
+    <div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;color:var(--muted)">
+      <span>{{ icon }}</span><span>{{ label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    <a href="/app" class="btn btn-primary" style="font-size:14px;padding:12px 28px">
+      ✦ Start Applying →
+    </a>
+    <a href="/billing/portal" class="btn btn-ghost" style="font-size:13px;padding:12px 20px">
+      Manage Subscription
+    </a>
+  </div>
+
+</div>
+{% endblock %}

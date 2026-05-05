@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}LinkedIn Optimizer — ResumeIQ{% endblock %}
+
+{% block extra_head %}
+<style>
+  .copy-wrap{position:relative}
+  .copy-fab{position:absolute;top:6px;right:6px;font-family:'Inter',sans-serif;font-size:10px;background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:2px 7px;cursor:pointer;transition:all .2s}
+  .copy-fab.copied{background:rgba(22,163,74,.15);color:var(--green);border-color:rgba(22,163,74,.3)}
+  .section-hdr{font-family:'Inter',sans-serif;font-weight:700;font-size:14px;margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+  .prio-High  {background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+  .prio-Medium{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+  .prio-Low   {background:rgba(234,88,12,.1);color:#fcd34d;border:1px solid rgba(234,88,12,.2)}
+  .score-ring-sm{width:80px;height:80px;flex-shrink:0}
+  .quick-win{display:flex;gap:8px;font-size:12px;color:var(--muted);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);line-height:1.55}
+  .quick-win:last-child{border-bottom:none}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wrap-sm" style="padding-top:32px">
+
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="" style="font-size:1.6rem;font-weight:800;letter-spacing:-.02em">💼 LinkedIn Optimizer</h1>
+      <p class="text-muted mono" style="font-size:11px;margin-top:3px">Optimize your profile so recruiters find you before you apply</p>
+    </div>
+    <a href="/app" class="btn btn-ghost" style="padding:10px 16px;font-size:12px">← Dashboard</a>
+  </div>
+
+  {% if user.tier != 'career_pro' %}
+  <div class="card" style="text-align:center;padding:48px 24px">
+    <div style="font-size:36px;margin-bottom:14px">💼</div>
+    <h2 class="" style="font-size:1.3rem;font-weight:800;margin-bottom:10px">LinkedIn Profile Optimizer</h2>
+    <p class="text-muted" style="font-size:13px;line-height:1.7;max-width:420px;margin:0 auto 20px">
+      Get an optimized headline, summary, experience bullets, skill recommendations, and SEO keywords — tailored to your target roles. Career Pro feature.
+    </p>
+    <a href="/pricing" class="btn btn-primary" style="font-size:14px;padding:12px 28px;display:inline-block">Upgrade to Career Pro →</a>
+  </div>
+  {% else %}
+
+  <div id="alert-box"></div>
+
+  <!-- Input -->
+  <div class="card" style="margin-bottom:14px" id="input-section">
+    <div class="label">Optimize For</div>
+    <div class="field">
+      <label class="label" style="font-size:10px">Job Description (optional — improves keyword targeting)</label>
+      <textarea class="input" id="jd-text" rows="4"
+        placeholder="Paste a target job description to get role-specific keyword optimization...&#10;Leave blank for general optimization based on your target roles."></textarea>
+    </div>
+    <p class="text-muted mono" style="font-size:10px;margin-bottom:12px">
+      Your target roles from profile:
+      <span id="target-roles-display" style="color:var(--accent)">loading...</span>
+    </p>
+    <button class="btn btn-primary" id="gen-btn" onclick="generateLinkedIn()" style="width:100%;font-size:14px;padding:13px">
+      ✦ Optimize My LinkedIn Profile
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" style="display:none;text-align:center;padding:48px 0">
+    <div class="spinner" style="margin:0 auto 14px"></div>
+    <div class=" bold" style="font-size:14px;margin-bottom:6px">Optimizing your profile...</div>
+    <p class="label-text text-muted" id="load-msg" style="font-size:11px;animation:pulse 1.8s ease infinite">
+      Analysing your career profile...
+    </p>
+  </div>
+
+  <!-- Results -->
+  <div id="results" style="display:none;animation:fadeUp .5s ease">
+
+    <!-- Profile Strength Score -->
+    <div class="card" style="margin-bottom:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <div>
+        <svg class="score-ring-sm" viewBox="0 0 80 80" style="transform:rotate(-90deg)">
+          <circle cx="40" cy="40" r="30" fill="none" stroke="var(--border)" stroke-width="8"/>
+          <circle id="str-circle" cx="40" cy="40" r="30" fill="none"
+            stroke="#ea580c" stroke-width="8" stroke-linecap="round"
+            stroke-dasharray="0 188.5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="label-text text-muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Current Profile Strength</div>
+        <div class=" bold" style="font-size:28px" id="str-score">—</div>
+        <div class="text-muted" style="font-size:12px">Apply these optimizations to reach 90+</div>
+      </div>
+    </div>
+
+    <!-- Quick Wins -->
+    <div class="section-hdr">⚡ Quick Wins — Under 5 Minutes Each</div>
+    <div class="card" style="margin-bottom:14px" id="quick-wins"></div>
+
+    <!-- Headline -->
+    <div class="section-hdr">📌 Headline</div>
+    <div class="card" style="margin-bottom:14px" id="headline-section"></div>
+
+    <!-- About Summary -->
+    <div class="section-hdr">📝 About Summary</div>
+    <div class="card" style="margin-bottom:14px" id="about-section"></div>
+
+    <!-- Experience Bullets -->
+    <div class="section-hdr">💼 Experience Bullets to Rewrite</div>
+    <div id="exp-bullets" style="margin-bottom:14px"></div>
+
+    <!-- Skills -->
+    <div class="section-hdr">🛠 Skills to Add & Pin</div>
+    <div class="card" style="margin-bottom:14px" id="skills-section"></div>
+
+    <!-- Featured Section -->
+    <div class="section-hdr">⭐ Featured Section</div>
+    <div class="card" style="margin-bottom:14px" id="featured-section"></div>
+
+    <!-- SEO Keywords -->
+    <div class="section-hdr">🔍 SEO Keywords for Recruiter Search</div>
+    <div class="card" style="margin-bottom:14px" id="seo-section">
+      <div id="seo-keywords"></div>
+    </div>
+
+    <!-- Connection Strategy -->
+    <div class="section-hdr">🤝 Connection Strategy</div>
+    <div class="card" style="margin-bottom:20px" id="connection-section"></div>
+
+    <div class="text-center">
+      <button class="btn btn-ghost" onclick="resetOptimizer()">↩ Re-optimize for Another Role</button>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+{% if user.tier == 'career_pro' %}
+<script>
+const loadMsgs = ['Analysing your career profile...','Generating headline options...','Writing your About summary...','Mapping SEO keywords...','Finalising recommendations...'];
+let _lt;
+function startLoad(){let i=0;const el=document.getElementById('load-msg');el.textContent=loadMsgs[0];_lt=setInterval(()=>{i=(i+1)%loadMsgs.length;el.textContent=loadMsgs[i];},2000);}
+function stopLoad(){clearInterval(_lt);}
+function esc(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// Load target roles from profile
+(async()=>{
+  try{
+    const res=await fetch('/api/profile');
+    const j=await res.json();
+    const roles=(j.data?.knowledge_graph?.graph?.identity?.target_roles||[]);
+    document.getElementById('target-roles-display').textContent = roles.length ? roles.join(' · ') : 'None set — add them on the Profile page';
+  }catch(e){}
+})();
+
+async function generateLinkedIn() {
+  const jd = document.getElementById('jd-text').value.trim();
+  document.getElementById('input-section').style.display = 'none';
+  document.getElementById('results').style.display       = 'none';
+  document.getElementById('loading').style.display       = 'block';
+  startLoad();
+
+  try {
+    const res  = await fetch('/api/linkedin-optimizer', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ jd_text: jd })
+    });
+    const json = await res.json();
+    stopLoad();
+    document.getElementById('loading').style.display = 'none';
+
+    if (!res.ok || !json.success) {
+      document.getElementById('input-section').style.display = 'block';
+      showAlert(json.error||'Generation failed.','error'); return;
+    }
+    renderOptimization(json.data.optimization);
+    document.getElementById('results').style.display = 'block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  } catch(e) {
+    stopLoad();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('input-section').style.display = 'block';
+    showAlert('Network error: '+e.message,'error');
+  }
+}
+
+function renderOptimization(opt) {
+  // Score ring
+  const score = opt.profile_strength_score || 0;
+  const color = score>=80?'#16a34a':score>=60?'#ea580c':score>=40?'#d97706':'#dc2626';
+  const circ  = 2*Math.PI*30;
+  document.getElementById('str-circle').setAttribute('stroke-dasharray',`${(score/100)*circ} ${circ-(score/100)*circ}`);
+  document.getElementById('str-circle').style.stroke = color;
+  document.getElementById('str-score').textContent = score;
+  document.getElementById('str-score').style.color  = color;
+
+  // Quick wins
+  const qw = opt.quick_wins || [];
+  document.getElementById('quick-wins').innerHTML = qw.map((w,i)=>`
+    <div class="quick-win">
+      <span class="label-text text-accent" style="font-size:10px;flex-shrink:0;margin-top:2px">0${i+1}</span>
+      ${esc(w)}
+    </div>`).join('');
+
+  // Headline
+  const h = opt.headline || {};
+  document.getElementById('headline-section').innerHTML = `
+    ${h.current_guess ? `<div style="margin-bottom:10px"><div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:4px">Current (estimated)</div>
+      <div style="font-size:13px;color:var(--muted);font-style:italic;text-decoration:line-through">${esc(h.current_guess)}</div></div>` : ''}
+    <div style="margin-bottom:10px">
+      <div class="label-text" style="font-size:9px;color:var(--green);text-transform:uppercase;margin-bottom:4px">✦ Optimized Headline</div>
+      <div class="copy-wrap">
+        <div id="hl-main" style="font-size:14px;font-weight:600;color:var(--text);background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);border-radius:8px;padding:10px 38px 10px 12px">${esc(h.optimized)}</div>
+        <button class="copy-fab" onclick="copyEl('hl-main',this)">Copy</button>
+      </div>
+    </div>
+    ${h.alternatives?.length ? `<div><div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:5px">Alternatives</div>${h.alternatives.map((a,i)=>`
+      <div class="copy-wrap" style="margin-bottom:6px">
+        <div id="hl-alt-${i}" style="font-size:13px;color:var(--muted);background:#f3f4f2;border:1px solid var(--border);border-radius:7px;padding:8px 38px 8px 10px">${esc(a)}</div>
+        <button class="copy-fab" onclick="copyEl('hl-alt-${i}',this)">Copy</button>
+      </div>`).join('')}</div>` : ''}`;
+
+  // About summary
+  const ab = opt.about_summary || {};
+  document.getElementById('about-section').innerHTML = `
+    <div class="copy-wrap">
+      <div id="about-txt" style="font-size:13px;color:var(--text);line-height:1.75;background:#f3f4f2;border:1px solid var(--border);border-radius:8px;padding:12px 40px 12px 12px;white-space:pre-wrap">${esc(ab.script)}</div>
+      <button class="copy-fab" onclick="copyEl('about-txt',this)">Copy</button>
+    </div>
+    ${ab.keywords_woven_in?.length ? `<div style="margin-top:10px"><div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:5px">Keywords woven in</div>${ab.keywords_woven_in.map(k=>`<span class="tag tag-match">${esc(k)}</span>`).join('')}</div>` : ''}`;
+
+  // Experience bullets
+  const eb = opt.experience_bullets || [];
+  document.getElementById('exp-bullets').innerHTML = eb.map((e,i)=>`
+    <div class="card" style="margin-bottom:8px">
+      <div class=" bold" style="font-size:13px">${esc(e.role)} <span class="text-muted" style="font-weight:400">at ${esc(e.company)}</span></div>
+      <div style="margin:10px 0">
+        <div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:4px">Optimized Top Bullet</div>
+        <div class="copy-wrap">
+          <div id="eb-${i}" style="font-size:12px;color:var(--text);background:rgba(22,163,74,.06);border:1px solid rgba(22,163,74,.2);border-radius:7px;padding:8px 38px 8px 10px;line-height:1.65">${esc(e.top_bullet)}</div>
+          <button class="copy-fab" onclick="copyEl('eb-${i}',this)">Copy</button>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);display:flex;gap:6px"><span style="color:var(--accent)">↑</span>${esc(e.reasoning)}</div>
+    </div>`).join('');
+
+  // Skills
+  const skills = opt.skills_to_add || [];
+  const pinned = opt.skills_to_pin || [];
+  document.getElementById('skills-section').innerHTML = `
+    ${pinned.length ? `<div style="margin-bottom:12px"><div class="label-text" style="font-size:9px;color:var(--accent);text-transform:uppercase;margin-bottom:5px">📌 Pin These 3 Skills (maximum visibility)</div>${pinned.map(s=>`<span class="tag tag-bonus" style="font-size:12px;padding:3px 10px">${esc(s)}</span>`).join('')}</div>` : ''}
+    <div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:8px">Skills to Add</div>
+    ${skills.map(s=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div><span style="font-size:13px;color:var(--text)">${esc(s.skill)}</span><div class="text-muted" style="font-size:11px;line-height:1.5">${esc(s.reason)}</div></div>
+      <span class="tag prio-${s.priority||'Medium'}" style="font-size:10px;flex-shrink:0;margin-left:8px">${esc(s.priority)}</span>
+    </div>`).join('')}`;
+
+  // Featured section
+  const feat = opt.featured_section || {};
+  document.getElementById('featured-section').innerHTML = `
+    <div style="display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:22px">⭐</span>
+      <div><div class=" bold" style="font-size:13px;margin-bottom:4px">${esc(feat.recommendation)}</div>
+      <div class="text-muted" style="font-size:12px;line-height:1.55">${esc(feat.why)}</div></div>
+    </div>`;
+
+  // SEO Keywords
+  const seo = opt.seo_keywords || [];
+  document.getElementById('seo-keywords').innerHTML = seo.map(k=>`<span class="tag tag-match" style="font-size:12px;padding:3px 9px">${esc(k)}</span>`).join('');
+
+  // Connection strategy
+  const cs = opt.connection_strategy || {};
+  document.getElementById('connection-section').innerHTML = `
+    ${cs.who_to_connect ? `<div style="margin-bottom:10px"><div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:4px">Who to Connect With</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.55">${esc(cs.who_to_connect)}</div></div>` : ''}
+    ${cs.connection_note ? `<div style="margin-bottom:10px">
+      <div class="label-text" style="font-size:9px;color:var(--green);text-transform:uppercase;margin-bottom:4px">Connection Request Template</div>
+      <div class="copy-wrap">
+        <div id="conn-note" style="font-size:12px;color:var(--text);background:#f3f4f2;border:1px solid var(--border);border-radius:7px;padding:8px 38px 8px 10px;line-height:1.65;white-space:pre-wrap">${esc(cs.connection_note)}</div>
+        <button class="copy-fab" onclick="copyEl('conn-note',this)">Copy</button>
+      </div></div>` : ''}
+    ${cs.groups_to_join?.length ? `<div><div class="label-text text-muted" style="font-size:9px;text-transform:uppercase;margin-bottom:5px">Groups to Join</div>${cs.groups_to_join.map(g=>`<span class="tag tag-bonus">${esc(g)}</span>`).join('')}</div>` : ''}`;
+}
+
+function copyEl(id, btn) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent.trim()).then(()=>{
+    btn.textContent='✓'; btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied')},2000);
+  });
+}
+
+function resetOptimizer() {
+  document.getElementById('results').style.display       = 'none';
+  document.getElementById('input-section').style.display = 'block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showAlert(msg,type) {
+  const b=document.getElementById('alert-box');
+  b.innerHTML=`<div class="alert alert-${type}" style="margin-bottom:14px">⚠ ${msg}</div>`;
+  setTimeout(()=>b.innerHTML='',6000);
+}
+</script>
+{% endif %}
+{% endblock %}

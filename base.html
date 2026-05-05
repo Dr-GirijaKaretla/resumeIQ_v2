@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}ResumeIQ — AI Career Intelligence{% endblock %}</title>
+  <meta name="description" content="AI-powered resume matching, rewriting, and cover letter generation. Get the interview you deserve."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --page-bg:   #f3f4f2;
+      --bg:        #f3f4f2;
+      --card-bg:   #ffffff;
+      --surface:   #ffffff;
+      --surface2:  #f3f4f2;
+      --border:    #e2e5e0;
+      --accent:    #16a34a;
+      --orange:    #ea580c;
+      --glow:      rgba(234,88,12,.2);
+      --green:     #16a34a;
+      --red:       #dc2626;
+      --yellow:    #d97706;
+      --text:      #111714;
+      --text-1:    #111714;
+      --text-2:    #374151;
+      --text-3:    #6b7280;
+      --muted:     #6b7280;
+      --white:     #ffffff;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+    }
+    body {
+      background: #f3f4f2; color: #374151;
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 16px; line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes spin   { to { transform: rotate(360deg); } }
+    @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(243,244,242,.97); border-bottom: 1px solid #e2e5e0; backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e2e5e0;
+      padding: 0 24px;
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 58px;
+    }
+    .logo {
+      font-family: 'Inter', sans-serif; font-weight: 800;
+      font-size: 18px; letter-spacing: -.02em; text-decoration: none;
+      color: var(--text);
+    }
+    .logo span { color: #ea580c; }
+    .nav-links { display: flex; align-items: center; gap: 8px; }
+    .nav-link {
+      font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 12px;
+      color: #5a6772; text-decoration: none; padding: 6px 12px;
+      border-radius: 7px; transition: all .2s;
+    }
+    .nav-link:hover { color: var(--text); background: rgba(255,255,255,.05); }
+    .nav-link.active { color: var(--text); }
+    .btn-nav {
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13px;
+      background: linear-gradient(135deg, #ea580c, #fcd34d);
+      color: #fff; border: none; border-radius: 8px;
+      padding: 8px 18px; cursor: pointer; text-decoration: none;
+      transition: all .2s;
+    }
+    .btn-nav:hover { opacity: .9; transform: translateY(-1px); }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--accent); object-fit: cover;
+    }
+    .tier-badge {
+      font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 10px;
+      text-transform: uppercase; letter-spacing: .08em;
+      padding: 2px 8px; border-radius: 99px;
+    }
+    .tier-free     { background: rgba(107,107,154,.15); color: var(--muted); border: 1px solid rgba(107,107,154,.3); }
+    .tier-job_hunter { background: rgba(234,88,12,.15); color: #fcd34d; border: 1px solid rgba(234,88,12,.3); }
+    .tier-career_pro { background: rgba(74,222,128,.15); color: var(--green); border: 1px solid rgba(74,222,128,.3); }
+
+    /* ── MAIN WRAPPER ── */
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+    .wrap-sm { max-width: 720px; margin: 0 auto; padding: 0 20px 60px; }
+
+    /* ── CARDS ── */
+    .card {
+      background: #f3f4f2; border: 1px solid #e2e5e0;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      border-radius: 14px; padding: 22px 24px;
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: .7;
+    }
+    .card.green-top::before { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+    .card.red-top::before   { background: linear-gradient(90deg, transparent, #e8573f, transparent); }
+    .card.yellow-top::before{ background: linear-gradient(90deg, transparent, var(--yellow), transparent); }
+    .card.no-top::before    { display: none; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px;
+      border-radius: 10px; padding: 12px 28px; cursor: pointer;
+      border: none; transition: all .2s; display: inline-block;
+      text-decoration: none; text-align: center;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #ea580c, #fcd34d);
+      color: #fff; box-shadow: 0 4px 16px rgba(234,88,12,.18);
+    }
+    .btn-primary:hover { background: #c2410c; box-shadow: 0 3px 10px rgba(234,88,12,.3); transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+    .btn-green  { background: linear-gradient(135deg, var(--green), #22c77a); color: #0a1a0f; }
+    .btn-green:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(74,222,128,.3); }
+    .btn-ghost  {
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border); font-family: 'Inter', sans-serif; letter-spacing: .04em;
+      font-size: 12px;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+    .btn-danger { background: rgba(248,113,113,.15); color: var(--red); border: 1px solid rgba(248,113,113,.3); font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 12px; }
+    .btn-danger:hover { background: rgba(248,113,113,.25); }
+
+    /* ── FORM ELEMENTS ── */
+    .input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif;
+      font-size: 14px; padding: 11px 14px; outline: none; transition: border-color .2s;
+    }
+    .input:focus { border-color: var(--accent); }
+    .input::placeholder { color: var(--muted); opacity: .7; }
+    textarea.input { min-height: 120px; resize: vertical; line-height: 1.6; }
+    .label {
+      font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 11px;
+      text-transform: uppercase; letter-spacing: .1em;
+      color: var(--muted); margin-bottom: 6px; display: block;
+    }
+    .field { margin-bottom: 16px; }
+
+    /* ── ALERTS ── */
+    .alert {
+      padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px;
+    }
+    .alert-error   { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.25); color: #ff9090; }
+    .alert-success { background: rgba(74,222,128,.1);   border: 1px solid rgba(74,222,128,.25);   color: var(--green); }
+    .alert-info    { background: rgba(234,88,12,.1);  border: 1px solid rgba(234,88,12,.25);  color: #fcd34d; }
+    .alert-warning { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.25); color: var(--yellow); }
+
+    /* ── TAGS ── */
+    .tag { font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 11px; padding: 2px 8px; border-radius: 5px; display: inline-block; margin: 2px; }
+    .tag-match  { background: rgba(74,222,128,.1);   color: var(--green); border: 1px solid rgba(74,222,128,.2); }
+    .tag-miss   { background: rgba(248,113,113,.1); color: var(--red);   border: 1px solid rgba(248,113,113,.2); }
+    .tag-bonus  { background: rgba(234,88,12,.1);  color: #fcd34d;      border: 1px solid rgba(234,88,12,.2); }
+    .tag-neutral{ background: rgba(255,255,255,.05);color: var(--muted); border: 1px solid var(--border); }
+
+    /* ── PROGRESS ── */
+    .progress { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; margin: 8px 0; }
+    .progress-fill { height: 100%; border-radius: 99px; transition: width 1s cubic-bezier(.4,0,.2,1); width: 0; }
+
+    /* ── SPINNER ── */
+    .spinner {
+      width: 36px; height: 36px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    /* ── UTILS ── */
+    .text-muted   { color: var(--muted); }
+    .text-accent  { color: var(--accent); }
+    .text-green   { color: var(--green); }
+    .text-red     { color: var(--red); }
+    .text-center  { text-align: center; }
+    .mono         { font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 12px; }
+    .syne         { font-family: 'Inter', sans-serif; }
+    .bold         { font-weight: 700; }
+    .mt-1 { margin-top: 8px; }   .mt-2 { margin-top: 16px; }
+    .mt-3 { margin-top: 24px; }  .mt-4 { margin-top: 32px; }
+    .mb-1 { margin-bottom: 8px; } .mb-2 { margin-bottom: 16px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media(max-width:640px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+    @media(max-width:640px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .wrap   { padding: 0 12px 48px; }
+      .wrap-sm{ padding: 0 12px 48px; }
+      .card   { padding: 16px; }
+      nav .nav-links .nav-link { display: none; }
+    }
+    /* Smooth scrolling */
+    html { scroll-behavior: smooth; }
+    /* Focus styles for accessibility */
+    .btn:focus-visible, .input:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">Resume<span>IQ</span></a>
+    <div class="nav-links">
+      {% if current_user.is_authenticated %}
+        <a href="/app"       class="nav-link {% if request.path == '/app' %}active{% endif %}">Dashboard</a>
+        <a href="/tracker"   class="nav-link {% if request.path == '/tracker' %}active{% endif %}">Tracker</a>
+        <a href="/history"   class="nav-link {% if request.path == '/history' %}active{% endif %}">History</a>
+        <a href="/interview" class="nav-link {% if request.path == '/interview' %}active{% endif %}">Interview</a>
+        <a href="/linkedin"  class="nav-link {% if request.path == '/linkedin' %}active{% endif %}">LinkedIn</a>
+        {% if current_user.tier == 'career_pro' %}
+        <a href="/digest"    class="nav-link {% if request.path == '/digest' %}active{% endif %}">Digest</a>
+        {% endif %}
+        <a href="/profile"   class="nav-link {% if request.path == '/profile' %}active{% endif %}">Profile</a>
+        <span class="tier-badge tier-{{ current_user.tier }}">{{ current_user.tier_label }}</span>
+        {% if current_user.avatar_url %}
+          <img src="{{ current_user.avatar_url }}" class="avatar" alt="{{ current_user.name }}">
+        {% endif %}
+        <a href="/auth/logout" class="btn-ghost btn" style="padding:6px 14px">Sign out</a>
+      {% else %}
+        <a href="/pricing"    class="nav-link">Pricing</a>
+        <a href="/auth/login" class="btn-nav">Sign in with Google</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+{% block content %}{% endblock %}
+
+<footer style="border-top:1px solid var(--border);padding:20px 24px;margin-top:40px">
+  <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+    <span class="label-text text-muted" style="font-size:10px">© 2026 ResumeIQ · Honest AI Career Intelligence</span>
+    <div style="display:flex;gap:16px">
+      <a href="/privacy" class="label-text text-muted" style="font-size:10px;text-decoration:none">Privacy</a>
+      <a href="/pricing" class="label-text text-muted" style="font-size:10px;text-decoration:none">Pricing</a>
+      {% if current_user.is_authenticated and current_user.tier != 'free' %}
+      <a href="/billing/portal" class="label-text text-muted" style="font-size:10px;text-decoration:none">Manage Subscription</a>
+      {% endif %}
+    </div>
+  </div>
+</footer>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

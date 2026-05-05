@@ -32,7 +32,23 @@ def make_google_bp():
 
 @auth_bp.route('/login')
 def login():
-    """Redirect to Google OAuth — never redirect if already logged in here."""
+    """Redirect to Google OAuth — guard against redirect loops."""
+    # 1. Already authenticated — send straight to dashboard
+    if current_user.is_authenticated:
+        return redirect('/app')
+
+    # 2. Verify OAuth credentials are configured before attempting the flow
+    client_id     = os.environ.get('GOOGLE_CLIENT_ID')
+    client_secret = os.environ.get('GOOGLE_CLIENT_SECRET')
+    if not client_id or not client_secret:
+        current_app.logger.warning(
+            'Google OAuth is not configured: GOOGLE_CLIENT_ID and/or '
+            'GOOGLE_CLIENT_SECRET are missing. Aborting login redirect.'
+        )
+        flash('Login is currently unavailable — OAuth is not configured.', 'error')
+        return redirect('/')
+
+    # 3. OAuth looks good — hand off to Google
     return redirect(url_for('google.login'))
 
 

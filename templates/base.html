@@ -6,33 +6,37 @@
   <title>{% block title %}ResumeIQ — AI Career Intelligence{% endblock %}</title>
   <meta name="description" content="AI-powered resume matching, rewriting, and cover letter generation. Get the interview you deserve."/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      /* Green & Orange — warm, bold, premium */
-      --bg:      #0a1a0f;   /* deep forest green-black */
-      --surface: #0f2318;   /* dark green surface */
-      --surface2:#132b1e;   /* slightly lighter green */
-      --border:  #1e4230;   /* green-tinted border */
-      --accent:  #f97316;   /* warm orange — primary CTA */
-      --glow:    rgba(249,115,22,.25);
-      --green:   #4ade80;   /* bright green for success */
-      --red:     #f87171;   /* soft rose for errors */
-      --yellow:  #fbbf24;   /* amber for warnings */
-      --text:    #f0fdf4;   /* near white with green tint */
-      --muted:   #6b9e7a;   /* muted green-grey */
-      --white:   #ffffff;
-      --orange:  #f97316;   /* orange alias */
-      --orange2: #fb923c;   /* lighter orange */
+      --page-bg:   #f3f4f2;
+      --bg:        #f3f4f2;
+      --card-bg:   #ffffff;
+      --surface:   #ffffff;
+      --surface2:  #f3f4f2;
+      --border:    #e2e5e0;
+      --accent:    #16a34a;
+      --orange:    #ea580c;
+      --glow:      rgba(234,88,12,.2);
+      --green:     #16a34a;
+      --red:       #dc2626;
+      --yellow:    #d97706;
+      --text:      #111714;
+      --text-1:    #111714;
+      --text-2:    #374151;
+      --text-3:    #6b7280;
+      --muted:     #6b7280;
+      --white:     #ffffff;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
     }
     body {
-      background: var(--bg); color: var(--text);
-      font-family: 'DM Sans', sans-serif; min-height: 100vh;
-      background-image:
-        linear-gradient(rgba(30,66,48,.3) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(30,66,48,.3) 1px, transparent 1px);
-      background-size: 40px 40px;
+      background: #f3f4f2; color: #374151;
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 16px; line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
     }
     @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
     @keyframes spin   { to { transform: rotate(360deg); } }
@@ -41,8 +45,8 @@
     /* ── NAV ── */
     nav {
       position: sticky; top: 0; z-index: 100;
-      background: rgba(10,26,15,.95); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
+      background: rgba(243,244,242,.97); border-bottom: 1px solid #e2e5e0; backdrop-filter: blur(12px);
+      border-bottom: 1px solid #e2e5e0;
       padding: 0 24px;
     }
     .nav-inner {
@@ -51,22 +55,22 @@
       height: 58px;
     }
     .logo {
-      font-family: 'Syne', sans-serif; font-weight: 800;
+      font-family: 'Inter', sans-serif; font-weight: 800;
       font-size: 18px; letter-spacing: -.02em; text-decoration: none;
       color: var(--text);
     }
-    .logo span { color: #f97316; }
+    .logo span { color: #ea580c; }
     .nav-links { display: flex; align-items: center; gap: 8px; }
     .nav-link {
-      font-family: 'DM Mono', monospace; font-size: 12px;
-      color: var(--muted); text-decoration: none; padding: 6px 12px;
+      font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 12px;
+      color: #5a6772; text-decoration: none; padding: 6px 12px;
       border-radius: 7px; transition: all .2s;
     }
     .nav-link:hover { color: var(--text); background: rgba(255,255,255,.05); }
     .nav-link.active { color: var(--text); }
     .btn-nav {
-      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px;
-      background: linear-gradient(135deg, #f97316, #fcd34d);
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: 13px;
+      background: linear-gradient(135deg, #ea580c, #fcd34d);
       color: #fff; border: none; border-radius: 8px;
       padding: 8px 18px; cursor: pointer; text-decoration: none;
       transition: all .2s;
@@ -77,12 +81,12 @@
       border: 2px solid var(--accent); object-fit: cover;
     }
     .tier-badge {
-      font-family: 'DM Mono', monospace; font-size: 10px;
+      font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 10px;
       text-transform: uppercase; letter-spacing: .08em;
       padding: 2px 8px; border-radius: 99px;
     }
     .tier-free     { background: rgba(107,107,154,.15); color: var(--muted); border: 1px solid rgba(107,107,154,.3); }
-    .tier-job_hunter { background: rgba(249,115,22,.15); color: #fcd34d; border: 1px solid rgba(249,115,22,.3); }
+    .tier-job_hunter { background: rgba(234,88,12,.15); color: #fcd34d; border: 1px solid rgba(234,88,12,.3); }
     .tier-career_pro { background: rgba(74,222,128,.15); color: var(--green); border: 1px solid rgba(74,222,128,.3); }
 
     /* ── MAIN WRAPPER ── */
@@ -91,7 +95,8 @@
 
     /* ── CARDS ── */
     .card {
-      background: var(--surface); border: 1px solid var(--border);
+      background: #f3f4f2; border: 1px solid #e2e5e0;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
       border-radius: 14px; padding: 22px 24px;
       position: relative; overflow: hidden;
     }
@@ -107,39 +112,39 @@
 
     /* ── BUTTONS ── */
     .btn {
-      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px;
       border-radius: 10px; padding: 12px 28px; cursor: pointer;
       border: none; transition: all .2s; display: inline-block;
       text-decoration: none; text-align: center;
     }
     .btn-primary {
-      background: linear-gradient(135deg, #f97316, #fcd34d);
-      color: #fff; box-shadow: 0 4px 16px rgba(249,115,22,.18);
+      background: linear-gradient(135deg, #ea580c, #fcd34d);
+      color: #fff; box-shadow: 0 4px 16px rgba(234,88,12,.18);
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px var(--glow); }
+    .btn-primary:hover { background: #c2410c; box-shadow: 0 3px 10px rgba(234,88,12,.3); transform: translateY(-1px); }
     .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
     .btn-green  { background: linear-gradient(135deg, var(--green), #22c77a); color: #0a1a0f; }
     .btn-green:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(74,222,128,.3); }
     .btn-ghost  {
       background: transparent; color: var(--muted);
-      border: 1px solid var(--border); font-family: 'DM Mono', monospace;
+      border: 1px solid var(--border); font-family: 'Inter', sans-serif; letter-spacing: .04em;
       font-size: 12px;
     }
     .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
-    .btn-danger { background: rgba(248,113,113,.15); color: var(--red); border: 1px solid rgba(248,113,113,.3); font-family: 'DM Mono', monospace; font-size: 12px; }
+    .btn-danger { background: rgba(248,113,113,.15); color: var(--red); border: 1px solid rgba(248,113,113,.3); font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 12px; }
     .btn-danger:hover { background: rgba(248,113,113,.25); }
 
     /* ── FORM ELEMENTS ── */
     .input {
       width: 100%; background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif;
+      border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif;
       font-size: 14px; padding: 11px 14px; outline: none; transition: border-color .2s;
     }
     .input:focus { border-color: var(--accent); }
     .input::placeholder { color: var(--muted); opacity: .7; }
     textarea.input { min-height: 120px; resize: vertical; line-height: 1.6; }
     .label {
-      font-family: 'DM Mono', monospace; font-size: 11px;
+      font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 11px;
       text-transform: uppercase; letter-spacing: .1em;
       color: var(--muted); margin-bottom: 6px; display: block;
     }
@@ -151,14 +156,14 @@
     }
     .alert-error   { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.25); color: #ff9090; }
     .alert-success { background: rgba(74,222,128,.1);   border: 1px solid rgba(74,222,128,.25);   color: var(--green); }
-    .alert-info    { background: rgba(249,115,22,.1);  border: 1px solid rgba(249,115,22,.25);  color: #fcd34d; }
+    .alert-info    { background: rgba(234,88,12,.1);  border: 1px solid rgba(234,88,12,.25);  color: #fcd34d; }
     .alert-warning { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.25); color: var(--yellow); }
 
     /* ── TAGS ── */
-    .tag { font-family: 'DM Mono', monospace; font-size: 11px; padding: 2px 8px; border-radius: 5px; display: inline-block; margin: 2px; }
+    .tag { font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 11px; padding: 2px 8px; border-radius: 5px; display: inline-block; margin: 2px; }
     .tag-match  { background: rgba(74,222,128,.1);   color: var(--green); border: 1px solid rgba(74,222,128,.2); }
     .tag-miss   { background: rgba(248,113,113,.1); color: var(--red);   border: 1px solid rgba(248,113,113,.2); }
-    .tag-bonus  { background: rgba(249,115,22,.1);  color: #fcd34d;      border: 1px solid rgba(249,115,22,.2); }
+    .tag-bonus  { background: rgba(234,88,12,.1);  color: #fcd34d;      border: 1px solid rgba(234,88,12,.2); }
     .tag-neutral{ background: rgba(255,255,255,.05);color: var(--muted); border: 1px solid var(--border); }
 
     /* ── PROGRESS ── */
@@ -178,8 +183,8 @@
     .text-green   { color: var(--green); }
     .text-red     { color: var(--red); }
     .text-center  { text-align: center; }
-    .mono         { font-family: 'DM Mono', monospace; font-size: 12px; }
-    .syne         { font-family: 'Syne', sans-serif; }
+    .mono         { font-family: 'Inter', sans-serif; letter-spacing: .04em; font-size: 12px; }
+    .syne         { font-family: 'Inter', sans-serif; }
     .bold         { font-weight: 700; }
     .mt-1 { margin-top: 8px; }   .mt-2 { margin-top: 16px; }
     .mt-3 { margin-top: 24px; }  .mt-4 { margin-top: 32px; }
@@ -241,12 +246,12 @@
 
 <footer style="border-top:1px solid var(--border);padding:20px 24px;margin-top:40px">
   <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-    <span class="mono text-muted" style="font-size:10px">© 2026 ResumeIQ · Honest AI Career Intelligence</span>
+    <span class="label-text text-muted" style="font-size:10px">© 2026 ResumeIQ · Honest AI Career Intelligence</span>
     <div style="display:flex;gap:16px">
-      <a href="/privacy" class="mono text-muted" style="font-size:10px;text-decoration:none">Privacy</a>
-      <a href="/pricing" class="mono text-muted" style="font-size:10px;text-decoration:none">Pricing</a>
+      <a href="/privacy" class="label-text text-muted" style="font-size:10px;text-decoration:none">Privacy</a>
+      <a href="/pricing" class="label-text text-muted" style="font-size:10px;text-decoration:none">Pricing</a>
       {% if current_user.is_authenticated and current_user.tier != 'free' %}
-      <a href="/billing/portal" class="mono text-muted" style="font-size:10px;text-decoration:none">Manage Subscription</a>
+      <a href="/billing/portal" class="label-text text-muted" style="font-size:10px;text-decoration:none">Manage Subscription</a>
       {% endif %}
     </div>
   </div>
